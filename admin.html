@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"><title>Admin – Natura's Trust</title>
+<style>
+:root{--g:#0e7a3d;--gd:#0a4f2a;--b:#0b5ea8;--o:#f59e0b}
+*{box-sizing:border-box;margin:0}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:#f3faf5;color:#12281c;font-size:16px}
+header{background:var(--gd);color:#fff;padding:10px 14px;display:flex;align-items:center;gap:10px;font-weight:700}
+header button{margin-left:auto}
+main{max-width:1000px;margin:auto;padding:14px}
+.card{background:#fff;border-radius:14px;padding:14px;box-shadow:0 4px 14px #0e7a3d1c;margin-bottom:14px}
+button{font:inherit;font-weight:700;border:0;border-radius:10px;padding:10px 14px;background:var(--g);color:#fff;cursor:pointer}
+button.o{background:var(--o);color:#3a2500}button.s{background:#e3efe8;color:var(--gd)}button.r{background:#c0392b}
+button:disabled{opacity:.5}
+input,select{font:inherit;padding:10px;border:2px solid #cfe0d5;border-radius:10px}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}.tabs button{background:#e3efe8;color:var(--gd)}.tabs button.on{background:var(--g);color:#fff}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:10px}
+table{width:100%;border-collapse:collapse;font-size:.92rem}th,td{padding:7px 8px;text-align:left;border-bottom:1px solid #e1ece5;white-space:nowrap}th{background:#eef7f1}
+.sc{overflow-x:auto}.hide{display:none}
+.msg{padding:12px;border-radius:10px;font-weight:700;margin:8px 0;background:#e3efe8}.msg.e{background:#fdecec;color:#8a1c1c}
+.sw{font:800 2.4rem/1.1 ui-monospace,Consolas,monospace;color:var(--b);margin:6px 0}
+.grid{display:grid;gap:12px}@media(min-width:700px){.grid{grid-template-columns:repeat(3,1fr)}}
+.chip{display:inline-block;background:#eef7f1;border-radius:999px;padding:4px 10px;margin:2px;font-weight:600;font-size:.9rem}
+h3{color:var(--gd);margin:14px 0 6px}
+video{width:100%;max-height:320px;border-radius:12px;background:#000}
+.bigin{font-size:1.3rem;width:150px}
+@media print{header,.tabs,.noprint{display:none!important}.card{box-shadow:none}}
+</style></head><body>
+<div id="login" class="card" style="max-width:380px;margin:60px auto">
+  <h3 style="margin-top:0">🔒 Admin Login</h3>
+  <div class="row"><input id="pw" type="password" placeholder="Password" style="flex:1"><button id="lbtn">Login</button></div>
+  <div id="lerr" class="msg e hide"></div>
+</div>
+
+<div id="app" class="hide">
+<header>🌿 Natura's Trust – Admin <button class="s" onclick="logout()">Logout</button></header>
+<main>
+<div class="tabs">
+  <button data-t="reg" class="on">📋 Registrations</button>
+  <button data-t="att">✅ Attendance</button>
+  <button data-t="race">⏱️ Race</button>
+  <button data-t="win">🏆 Winners</button>
+</div>
+
+<section id="t_reg" class="tp">
+  <div class="card"><div id="sum" class="row"></div>
+    <div class="row noprint">
+      <input id="q" placeholder="Search name / phone / BIB" style="flex:1;min-width:180px">
+      <select id="fc"><option value="">All events</option><option value="M7">7 KM</option><option value="M5">5 KM</option><option value="KIDS">Kids Indoor</option><option value="AZ">Bodybuilding</option></select>
+      <label><input type="checkbox" id="unp"> include unpaid</label>
+    </div>
+    <div class="row noprint"><button onclick="csv()">⬇ Export CSV</button><button class="o" onclick="badges()">🖨 Print BIB badges (this list)</button></div>
+    <div id="regMsg" class="msg e hide"></div>
+    <div class="sc" id="regList"></div>
+  </div>
+</section>
+
+<section id="t_att" class="tp hide">
+  <div class="card">
+    <h3 style="margin-top:0">Mark attendance</h3>
+    <div class="row"><input id="ab" class="bigin" inputmode="numeric" placeholder="BIB no"><button onclick="markBox()">Mark present</button><button class="o" onclick="toggleScan('scanA',markCode)">📷 Scan QR</button></div>
+    <div id="scanA" class="hide"></div>
+    <div id="attMsg" class="msg hide"></div>
+    <div id="attList"></div>
+  </div>
+</section>
+
+<section id="t_race" class="tp hide">
+  <div class="grid" id="swBox"></div>
+  <div class="card">
+    <h3 style="margin-top:0">Runner crossed the finish line</h3>
+    <div class="row"><input id="fb" class="bigin" inputmode="numeric" placeholder="BIB no"><button onclick="finBox()">🏁 FINISH</button><button class="o" onclick="toggleScan('scanR',finCode)">📷 Scan QR</button></div>
+    <div id="scanR" class="hide"></div>
+    <div id="finMsg" class="msg hide"></div>
+    <div class="sc" id="finList"></div>
+  </div>
+</section>
+
+<section id="t_win" class="tp hide">
+  <div class="card"><div class="row noprint"><button onclick="window.print()">🖨 Print winners</button></div>
+    <h3 style="margin-top:0">Winners list</h3><div id="winBox"></div>
+    <p style="margin-top:12px;color:#557">Bodybuilding is judged on stage – enter its winners manually.</p>
+  </div>
+</section>
+</main></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jsQR/1.4.0/jsQR.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script>
+var T=null,D={rows:[],race:{}},off=0,VIEW=[],tab='reg';
+try{T=sessionStorage.getItem('t')}catch(e){}
+var $=function(i){return document.getElementById(i)};
+function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
+var CAT={M7:'7 KM',M5:'5 KM',KIDS:'Kids Indoor',AZ:'Bodybuilding'};
+var PRIZE={M7:['₹3,000','₹2,000','₹1,000'],M5:['₹2,000','₹1,000','₹500'],KIDS:['🏆 Memorable Cup','🏆 Memorable Cup','🏆 Memorable Cup']};
+function gl(c,g){return(c==='M7'||c==='AZ')?(g==='F'?'Women':'Men'):(g==='F'?'Girls':'Boys')}
+function pad(n){return(n<10?'0':'')+n}
+function fmt(ms,dp){if(ms<0)ms=0;var u=dp===2?10:100,t=Math.floor(ms/u),f=dp===2?100:10,d=t%f,s=Math.floor(t/f)%60,m=Math.floor(t/(60*f))%60,h=Math.floor(t/(3600*f));return(h?h+':':'')+pad(m)+':'+pad(s)+'.'+(dp===2?pad(d):d)}
+function api(action,extra){
+  var b=Object.assign({action:action},extra||{});
+  return fetch('/api/admin',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+(T||'')},body:JSON.stringify(b)})
+  .then(function(r){return r.json().catch(function(){return{}}).then(function(j){
+    if(r.status===401&&action!=='login'){logout();throw new Error('Please login again')}
+    if(!r.ok)throw new Error(j.error||'Error '+r.status);return j})});
+}
+function flash(id,t,err){var e=$(id);e.textContent=t;e.className='msg'+(err?' e':'');}
+function logout(){T=null;try{sessionStorage.removeItem('t')}catch(e){}stopScan();$('app').classList.add('hide');$('login').classList.remove('hide')}
+function enter(){$('login').classList.add('hide');$('app').classList.remove('hide');load()}
+$('lbtn').onclick=function(){$('lerr').className='msg e hide';api('login',{password:$('pw').value}).then(function(j){T=j.token;try{sessionStorage.setItem('t',T)}catch(e){}enter()}).catch(function(e){$('lerr').textContent=e.message;$('lerr').className='msg e'})};
+$('pw').addEventListener('keydown',function(e){if(e.key==='Enter')$('lbtn').click()});
+if(T)enter();
+
+document.querySelectorAll('.tabs button').forEach(function(b){b.onclick=function(){
+  tab=b.getAttribute('data-t');stopScan();
+  document.querySelectorAll('.tabs button').forEach(function(x){x.classList.toggle('on',x===b)});
+  document.querySelectorAll('.tp').forEach(function(s){s.classList.toggle('hide',s.id!=='t_'+tab)});
+}});
+
+function load(){
+  return api('list',{all:$('unp').checked}).then(function(j){
+    D.rows=j.rows;D.race={};j.race.forEach(function(r){D.race[r.category]=new Date(r.started_at).getTime()});
+    off=new Date(j.now).getTime()-Date.now();render();$('regMsg').className='msg e hide';
+  }).catch(function(e){if(T)flash('regMsg',e.message,1)});
+}
+setInterval(function(){if(T&&!document.hidden)load()},7000);
+$('q').oninput=$('fc').onchange=function(){render()};$('unp').onchange=load;
+
+function ranks(){var g={},R={};
+  D.rows.filter(function(r){return r.finish_at&&D.race[r.category]}).sort(function(a,b){return new Date(a.finish_at)-new Date(b.finish_at)}).forEach(function(r){var k=r.category+r.gender;g[k]=(g[k]||0)+1;R[r.bib_no]=g[k]});return R}
+function el(r){return new Date(r.finish_at).getTime()-D.race[r.category]}
+
+function render(){renderReg();renderAtt();renderRace();renderWin()}
+
+function renderReg(){
+  var paid=D.rows.filter(function(r){return r.payment_status==='paid'}),cn={};
+  paid.forEach(function(r){cn[r.category]=(cn[r.category]||0)+1});
+  $('sum').innerHTML='<span class="chip">Paid: <b>'+paid.length+'</b></span>'+Object.keys(CAT).map(function(c){return'<span class="chip">'+CAT[c]+': <b>'+(cn[c]||0)+'</b></span>'}).join('')+'<span class="chip">Present: <b>'+paid.filter(function(r){return r.attended_at}).length+'</b></span>';
+  var q=$('q').value.trim().toLowerCase(),c=$('fc').value;
+  VIEW=D.rows.filter(function(r){return(!c||r.category===c)&&(!q||(r.name+' '+r.phone+' '+(r.bib_no||'')+' '+(r.city||'')).toLowerCase().indexOf(q)>-1)});
+  $('regList').innerHTML='<table><tr><th>BIB</th><th>Name</th><th>Event</th><th>Group</th><th>Age</th><th>Phone</th><th>City</th><th>Status</th><th>Present</th></tr>'+
+  VIEW.map(function(r){return'<tr><td><b>'+(r.bib_no||'-')+'</b></td><td>'+esc(r.name)+'</td><td>'+CAT[r.category]+'</td><td>'+gl(r.category,r.gender)+'</td><td>'+r.age+'</td><td>'+esc(r.phone)+'</td><td>'+esc(r.city||'')+'</td><td>'+r.payment_status+'</td><td>'+(r.attended_at?'✅':'')+'</td></tr>'}).join('')+'</table>';
+}
+function csv(){
+  var rows=[['BIB','Reg No','Name','Age','Group','Event','Phone','City','Amount','Status','Paid At','Present','Finish Time']].concat(VIEW.map(function(r){return[r.bib_no||'',r.reg_no||'',r.name,r.age,gl(r.category,r.gender),CAT[r.category],r.phone,r.city||'',r.amount,r.payment_status,r.paid_at||'',r.attended_at?'Yes':'No',(r.finish_at&&D.race[r.category])?fmt(el(r),2):'']}));
+  var s=rows.map(function(a){return a.map(function(x){return'"'+String(x).replace(/"/g,'""')+'"'}).join(',')}).join('\r\n');
+  var a=document.createElement('a');a.href=URL.createObjectURL(new Blob(['\ufeff'+s],{type:'text/csv'}));a.download='natura-registrations.csv';a.click();
+}
+function badges(){
+  var L=VIEW.filter(function(r){return r.bib_no});if(!L.length)return alert('No paid entries in this list');
+  var items=L.map(function(r){var d=document.createElement('div');new QRCode(d,{text:'NT:'+r.bib_no,width:150,height:150});var cv=d.querySelector('canvas');
+    return'<div class="b"><div class="h">NATURA\'S TRUST MARATHON 2026</div><div class="n">'+r.bib_no+'</div><div class="nm">'+esc(r.name)+'</div><div class="m">'+CAT[r.category]+' • '+gl(r.category,r.gender)+'</div><img src="'+(cv?cv.toDataURL():'')+'"><div class="m">'+esc(r.reg_no)+'</div></div>'}).join('');
+  var w=window.open('','_blank');
+  w.document.write('<html><head><title>BIB badges</title><style>body{font-family:Arial,sans-serif;margin:8mm}.g{display:grid;grid-template-columns:1fr 1fr;gap:6mm}.b{border:2px solid #0e7a3d;border-radius:8px;text-align:center;padding:0 0 6px;page-break-inside:avoid}.h{background:#0e7a3d;color:#fff;font-weight:bold;padding:6px;font-size:12px}.n{font-size:64px;font-weight:900;line-height:1.1}.nm{font-size:18px;font-weight:bold}.m{font-size:13px;color:#333}</style></head><body><div class="g">'+items+'</div></body></html>');
+  w.document.close();setTimeout(function(){w.print()},600);
+}
+
+/* scanning (camera) */
+var SC={s:null,raf:0,last:'',t:0};
+function stopScan(){if(SC.raf)cancelAnimationFrame(SC.raf);SC.raf=0;if(SC.s){SC.s.getTracks().forEach(function(t){t.stop()});SC.s=null}['scanA','scanR'].forEach(function(i){$(i).innerHTML='';$(i).classList.add('hide')})}
+function toggleScan(boxId,cb){
+  if(SC.s){return stopScan()}stopScan();
+  var box=$(boxId),v=document.createElement('video');v.setAttribute('playsinline','');box.appendChild(v);box.classList.remove('hide');
+  navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'}}).then(function(st){
+    SC.s=st;v.srcObject=st;v.play();var c=document.createElement('canvas'),x=c.getContext('2d');
+    (function tick(){if(!SC.s)return;
+      if(v.readyState===v.HAVE_ENOUGH_DATA){c.width=v.videoWidth;c.height=v.videoHeight;x.drawImage(v,0,0);
+        var d=x.getImageData(0,0,c.width,c.height),q=jsQR(d.data,d.width,d.height);
+        if(q&&q.data){var n=Date.now();if(q.data!==SC.last||n-SC.t>3000){SC.last=q.data;SC.t=n;cb(q.data)}}}
+      SC.raf=requestAnimationFrame(tick)})();
+  }).catch(function(){box.textContent='Camera not available. Type the BIB number instead.'});
+}
+function bibOf(t){var m=/NT:(\d+)/.exec(t);return m?m[1]:(/^\d+$/.test(String(t).trim())?String(t).trim():null)}
+function who(e){return'#'+e.bib_no+' '+e.name+' ('+CAT[e.category]+' • '+gl(e.category,e.gender)+')'}
+
+/* attendance */
+function mark(bib){return api('attend',{bib:bib}).then(function(j){flash('attMsg',(j.already?'ℹ️ Already marked: ':'✅ Present: ')+who(j.entry));return load()}).catch(function(e){flash('attMsg','❌ '+e.message,1)})}
+function markCode(t){var b=bibOf(t);if(b)mark(b);else flash('attMsg','❌ Not a valid code',1)}
+function markBox(){var b=bibOf($('ab').value);if(b)mark(b).then(function(){$('ab').value='';$('ab').focus()});else flash('attMsg','❌ Enter a BIB number',1)}
+$('ab').addEventListener('keydown',function(e){if(e.key==='Enter')markBox()});
+function renderAtt(){
+  var paid=D.rows.filter(function(r){return r.payment_status==='paid'}),here=paid.filter(function(r){return r.attended_at}).sort(function(a,b){return new Date(b.attended_at)-new Date(a.attended_at)}),no=paid.filter(function(r){return!r.attended_at});
+  $('attList').innerHTML='<p><b>Present: '+here.length+'</b> &nbsp; Not yet arrived: <b>'+no.length+'</b></p><h3>Latest arrivals</h3>'+
+  here.slice(0,12).map(function(r){return'<span class="chip">#'+r.bib_no+' '+esc(r.name)+' <a href="#" onclick="unmark('+r.bib_no+');return false">✖</a></span>'}).join('')+
+  '<details style="margin-top:10px"><summary>Not yet arrived ('+no.length+')</summary>'+no.map(function(r){return'<span class="chip">#'+r.bib_no+' '+esc(r.name)+'</span>'}).join('')+'</details>';
+}
+function unmark(b){api('unattend',{bib:b}).then(load)}
+
+/* race */
+function startRace(c){api('race-start',{category:c}).then(load).catch(function(e){alert(e.message)})}
+function resetRace(c){if(confirm('Reset '+CAT[c]+'? The stopwatch AND all its finish times will be cleared.'))api('race-reset',{category:c}).then(load)}
+function finish(bib){return api('finish',{bib:bib}).then(function(j){return load().then(function(){var R=ranks();flash('finMsg',(j.already?'ℹ️ Already finished: ':'🏁 ')+who(j.entry)+' — Position '+R[j.entry.bib_no]+' — '+fmt(j.elapsed,2))})}).catch(function(e){flash('finMsg','❌ '+e.message,1)})}
+function finCode(t){var b=bibOf(t);if(b)finish(b)}
+function finBox(){var b=bibOf($('fb').value);if(!b)return flash('finMsg','❌ Enter a BIB number',1);finish(b).then(function(){$('fb').value='';$('fb').focus()})}
+$('fb').addEventListener('keydown',function(e){if(e.key==='Enter')finBox()});
+function undo(b){if(confirm('Remove finish time of BIB '+b+'?'))api('unfinish',{bib:b}).then(load)}
+function renderRace(){
+  $('swBox').innerHTML=['M7','M5','KIDS'].map(function(c){var on=!!D.race[c];
+    return'<div class="card"><b>'+CAT[c]+'</b><div class="sw" id="sw_'+c+'">00:00.0</div><div class="row">'+(on?'<span class="chip">⏱ Running</span>':'<button class="o" onclick="startRace(\''+c+'\')">▶ START</button>')+'<button class="s" onclick="resetRace(\''+c+'\')">Reset</button></div></div>'}).join('');
+  var R=ranks(),F=D.rows.filter(function(r){return r.finish_at&&D.race[r.category]}).sort(function(a,b){return new Date(b.finish_at)-new Date(a.finish_at)});
+  $('finList').innerHTML=F.length?'<table><tr><th>Pos</th><th>BIB</th><th>Name</th><th>Event</th><th>Time</th><th></th></tr>'+F.map(function(r){return'<tr><td><b>'+R[r.bib_no]+'</b></td><td>'+r.bib_no+'</td><td>'+esc(r.name)+'</td><td>'+CAT[r.category]+' • '+gl(r.category,r.gender)+'</td><td>'+fmt(el(r),2)+'</td><td><button class="s" onclick="undo('+r.bib_no+')">Undo</button></td></tr>'}).join('')+'</table>':'<p>No finishers yet.</p>';
+}
+setInterval(function(){['M7','M5','KIDS'].forEach(function(c){var e=$('sw_'+c);if(e)e.textContent=D.race[c]?fmt(Date.now()+off-D.race[c]):'00:00.0'})},100);
+
+/* winners */
+function renderWin(){
+  var h='';[['M7','M'],['M7','F'],['M5','M'],['M5','F'],['KIDS','M'],['KIDS','F']].forEach(function(p){
+    var L=D.rows.filter(function(r){return r.category===p[0]&&r.gender===p[1]&&r.finish_at&&D.race[p[0]]}).sort(function(a,b){return new Date(a.finish_at)-new Date(b.finish_at)});
+    h+='<h3>'+CAT[p[0]]+' – '+gl(p[0],p[1])+'</h3>';
+    h+=L.length?'<div class="sc"><table><tr><th>Pos</th><th>BIB</th><th>Name</th><th>Time</th><th>Prize</th></tr>'+L.map(function(r,i){return'<tr'+(i<3?' style="background:#fff7e0;font-weight:700"':'')+'><td>'+['🥇','🥈','🥉'][i]+(i<3?'':(i+1))+'</td><td>'+r.bib_no+'</td><td>'+esc(r.name)+'</td><td>'+fmt(el(r),2)+'</td><td>'+(i<3?PRIZE[p[0]][i]:'')+'</td></tr>'}).join('')+'</table></div>':'<p style="color:#557">No finishers yet.</p>';
+  });
+  $('winBox').innerHTML=h;
+}
+</script></body></html>
