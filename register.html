@@ -42,6 +42,7 @@ select:disabled{background:#eef2ef}
 .bib .nm{font-size:1.4rem;font-weight:800;margin-top:6px;word-break:break-word}
 .bib .mt{color:#35523f;font-weight:600}
 .bib .rg{margin:8px 0;font-weight:800;color:var(--gd)}
+.bib .qr{display:flex;justify-content:center;margin:8px 0}
 .bib .ft{font-size:.82rem;color:#35523f}
 .out img{width:100%;border-radius:12px;margin-top:12px;border:1px solid #cfe0d5}
 .out p{font-weight:600;margin-top:8px;text-align:center}
@@ -94,7 +95,8 @@ select:disabled{background:#eef2ef}
 </div>
 </main>
 
-<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+<script src="https://sdk.cashfree.com/js/v3/cashfree.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script>
 var CONTACT="74185 84497";
@@ -126,12 +128,13 @@ function msg(t){$('msg').textContent=t;show('msg',!!t);if(t)$('msg').scrollIntoV
 
 function makeCard(e){
   var w=document.createElement('div');
-  w.innerHTML='<div class="bib"><div class="bh">NATURA\'S TRUST MARATHON 2026</div><div class="bl">BIB NO</div><div class="bn"></div><div class="nm"></div><div class="mt"></div><div class="rg"></div><div class="ft">Sun, 25 Oct 2026 • Mukkudal, Thamirabarani Riverbank</div></div><button type="button" class="btn g">📥 SAVE CARD AS IMAGE / அட்டையை படமாகச் சேமி</button><div class="out"></div>';
+  w.innerHTML='<div class="bib"><div class="bh">NATURA\'S TRUST MARATHON 2026</div><div class="bl">BIB NO</div><div class="bn"></div><div class="nm"></div><div class="mt"></div><div class="rg"></div><div class="qr"></div><div class="ft">Sun, 25 Oct 2026 • Mukkudal, Thamirabarani Riverbank</div></div><button type="button" class="btn g">📥 SAVE CARD AS IMAGE / அட்டையை படமாகச் சேமி</button><div class="out"></div>';
   var b=w.firstChild;
   b.querySelector('.bn').textContent=e.bib_no;
   b.querySelector('.nm').textContent=e.name;
   b.querySelector('.mt').textContent=(CATS[e.category]||e.category)+' • '+(e.gender==='F'?'Female':'Male')+' • Age '+e.age;
   b.querySelector('.rg').textContent=e.reg_no;
+  new QRCode(b.querySelector('.qr'),{text:'NT:'+e.bib_no,width:140,height:140});
   var btn=w.querySelector('button'),out=w.querySelector('.out');
   btn.onclick=function(){
     btn.disabled=true;
@@ -156,18 +159,15 @@ $('f').addEventListener('submit',function(x){
   var btn=$('pay');btn.disabled=true;btn.textContent='Please wait… / காத்திருக்கவும்…';
   function reset(){btn.disabled=false;btn.innerHTML='PAY &amp; REGISTER / பணம் செலுத்தி பதிவு செய்'}
   api('create-order',{event:e,name:name,age:age,gender:gender,phone:phone,city:city}).then(function(o){
-    var rz=new Razorpay({key:o.key_id,amount:o.amount,currency:'INR',order_id:o.order_id,name:"Natura's Trust",
-      prefill:{name:name,contact:phone},theme:{color:'#0e7a3d'},
-      handler:function(res){
-        btn.textContent='Confirming… / உறுதி செய்கிறோம்…';
-        api('verify',res).then(function(v){
-          $('dout').innerHTML='';$('dout').appendChild(makeCard(v));
-          show('formView',false);show('doneView',true);window.scrollTo(0,0);
-        }).catch(function(er){reset();msg('Payment received but confirmation failed: '+er.message+'. Do NOT pay again. Call '+CONTACT+' with payment ID '+res.razorpay_payment_id)});
-      },
-      modal:{ondismiss:function(){reset();msg('Payment cancelled. / பணம் செலுத்துதல் ரத்தானது.')}}});
-    rz.on('payment.failed',function(r){reset();msg('Payment failed'+(r&&r.error&&r.error.description?': '+r.error.description:'')+'. Please try again. / பணம் செலுத்தல் தோல்வி.')});
-    rz.open();
+    var cf=Cashfree({mode:o.mode});
+    return cf.checkout({paymentSessionId:o.payment_session_id,redirectTarget:'_modal'}).then(function(res){
+      if(res&&res.error){reset();return msg('Payment not completed'+(res.error.message?': '+res.error.message:'')+'. If money was deducted, do NOT pay again - call '+CONTACT+'. / பணம் செலுத்தல் முடியவில்லை.')}
+      btn.textContent='Confirming… / உறுதி செய்கிறோம்…';
+      return api('verify',{order_id:o.order_id}).then(function(v){
+        $('dout').innerHTML='';$('dout').appendChild(makeCard(v));
+        show('formView',false);show('doneView',true);window.scrollTo(0,0);
+      }).catch(function(er){reset();msg(er.message+'. If money was deducted, do NOT pay again. Wait a few minutes and use "Get my card", or call '+CONTACT+' (Order '+o.order_id+').')});
+    });
   }).catch(function(er){reset();msg(er.message)});
 });
 
