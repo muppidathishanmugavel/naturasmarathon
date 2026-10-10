@@ -13,13 +13,14 @@ module.exports = async (req, res) => {
   if (req.method !== 'POST') return res.status(405).end();
   try {
     const body = await raw(req);
-    const exp = crypto.createHmac('sha256', process.env.RAZORPAY_WEBHOOK_SECRET || '').update(body).digest('hex');
-    const got = String(req.headers['x-razorpay-signature'] || '');
-    if (exp.length !== got.length || !crypto.timingSafeEqual(Buffer.from(exp), Buffer.from(got))) return res.status(400).end();
+    const ts = String(req.headers['x-webhook-timestamp'] || '');
+    const got = String(req.headers['x-webhook-signature'] || '');
+    const exp = crypto.createHmac('sha256', String(process.env.CASHFREE_SECRET_KEY || '').trim()).update(ts + body).digest('base64');
+    if (!got || exp.length !== got.length || !crypto.timingSafeEqual(Buffer.from(exp), Buffer.from(got))) return res.status(400).end();
     const ev = JSON.parse(body);
-    if (ev.event === 'payment.captured' || ev.event === 'order.paid') {
-      const pay = ev.payload.payment && ev.payload.payment.entity;
-      if (pay && pay.order_id) await markPaid(pay.order_id, pay.id);
+    const d = ev.data || {};
+    if (ev.type === 'PAYMENT_SUCCESS_WEBHOOK' && d.order && d.order.order_id) {
+      await markPaid(d.order.order_id, String((d.payment && d.payment.cf_payment_id) || d.order.order_id));
     }
     res.status(200).json({ ok: true });
   } catch (e) {
