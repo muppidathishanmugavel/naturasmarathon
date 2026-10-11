@@ -26,13 +26,13 @@ video{width:100%;max-height:320px;border-radius:12px;background:#000}
 @media print{header,.tabs,.noprint{display:none!important}.card{box-shadow:none}}
 </style></head><body>
 <div id="login" class="card" style="max-width:380px;margin:60px auto">
-  <h3 style="margin-top:0">🔒 Admin Login</h3>
+  <h3 style="margin-top:0">🔒 Admin / Organiser Login</h3>
   <div class="row"><input id="pw" type="password" placeholder="Password" style="flex:1"><button id="lbtn">Login</button></div>
   <div id="lerr" class="msg e hide"></div>
 </div>
 
 <div id="app" class="hide">
-<header>🌿 Natura's Trust – Admin <button class="s" onclick="logout()">Logout</button></header>
+<header>🌿 Natura's Trust – <span id="roleName">Admin</span> <button class="s" onclick="logout()">Logout</button></header>
 <main>
 <div class="tabs">
   <button data-t="reg" class="on">📋 Registrations</button>
@@ -86,8 +86,8 @@ video{width:100%;max-height:320px;border-radius:12px;background:#000}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jsQR/1.4.0/jsQR.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script>
-var T=null,D={rows:[],race:{}},off=0,VIEW=[],tab='reg';
-try{T=sessionStorage.getItem('t')}catch(e){}
+var T=null,ROLE='admin',D={rows:[],race:{},stop:{}},off=0,VIEW=[],tab='reg';
+try{T=sessionStorage.getItem('t');ROLE=sessionStorage.getItem('r')||'admin'}catch(e){}
 var $=function(i){return document.getElementById(i)};
 function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
 var CAT={M7:'7 KM',M5:'5 KM',KIDS:'Kids Indoor',AZ:'Bodybuilding'};
@@ -104,8 +104,14 @@ function api(action,extra){
 }
 function flash(id,t,err){var e=$(id);e.textContent=t;e.className='msg'+(err?' e':'');}
 function logout(){T=null;try{sessionStorage.removeItem('t')}catch(e){}stopScan();$('app').classList.add('hide');$('login').classList.remove('hide')}
-function enter(){$('login').classList.add('hide');$('app').classList.remove('hide');load()}
-$('lbtn').onclick=function(){$('lerr').className='msg e hide';api('login',{password:$('pw').value}).then(function(j){T=j.token;try{sessionStorage.setItem('t',T)}catch(e){}enter()}).catch(function(e){$('lerr').textContent=e.message;$('lerr').className='msg e'})};
+function enter(){
+  $('login').classList.add('hide');$('app').classList.remove('hide');
+  var adm=ROLE==='admin';$('roleName').textContent=adm?'Admin':'Organiser';
+  document.querySelectorAll('.tabs button').forEach(function(b){var t=b.getAttribute('data-t');b.classList.toggle('hide',!adm&&t==='reg')});
+  document.querySelector('.tabs button[data-t="'+(adm?'reg':'att')+'"]').click();
+  load();
+}
+$('lbtn').onclick=function(){$('lerr').className='msg e hide';api('login',{password:$('pw').value}).then(function(j){T=j.token;ROLE=j.role;try{sessionStorage.setItem('t',T);sessionStorage.setItem('r',ROLE)}catch(e){}enter()}).catch(function(e){$('lerr').textContent=e.message;$('lerr').className='msg e'})};
 $('pw').addEventListener('keydown',function(e){if(e.key==='Enter')$('lbtn').click()});
 if(T)enter();
 
@@ -117,7 +123,7 @@ document.querySelectorAll('.tabs button').forEach(function(b){b.onclick=function
 
 function load(){
   return api('list',{all:$('unp').checked}).then(function(j){
-    D.rows=j.rows;D.race={};j.race.forEach(function(r){D.race[r.category]=new Date(r.started_at).getTime()});
+    D.rows=j.rows;D.race={};D.stop={};if(j.role&&j.role!==ROLE){ROLE=j.role}j.race.forEach(function(r){D.race[r.category]=new Date(r.started_at).getTime();if(r.stopped_at)D.stop[r.category]=new Date(r.stopped_at).getTime()});
     off=new Date(j.now).getTime()-Date.now();render();$('regMsg').className='msg e hide';
   }).catch(function(e){if(T)flash('regMsg',e.message,1)});
 }
@@ -128,7 +134,7 @@ function ranks(){var g={},R={};
   D.rows.filter(function(r){return r.finish_at&&D.race[r.category]}).sort(function(a,b){return new Date(a.finish_at)-new Date(b.finish_at)}).forEach(function(r){var k=r.category+r.gender;g[k]=(g[k]||0)+1;R[r.bib_no]=g[k]});return R}
 function el(r){return new Date(r.finish_at).getTime()-D.race[r.category]}
 
-function render(){renderReg();renderAtt();renderRace();renderWin()}
+function render(){if(ROLE==='admin')renderReg();renderWin();renderAtt();renderRace()}
 
 function renderReg(){
   var paid=D.rows.filter(function(r){return r.payment_status==='paid'}),cn={};
@@ -186,6 +192,8 @@ function unmark(b){api('unattend',{bib:b}).then(load)}
 
 /* race */
 function startRace(c){api('race-start',{category:c}).then(load).catch(function(e){alert(e.message)})}
+function stopRace(c){if(confirm('Stop the '+CAT[c]+' clock? Finish entries will be blocked until you resume.'))api('race-stop',{category:c}).then(load).catch(function(e){alert(e.message)})}
+function resumeRace(c){api('race-resume',{category:c}).then(load).catch(function(e){alert(e.message)})}
 function resetRace(c){if(confirm('Reset '+CAT[c]+'? The stopwatch AND all its finish times will be cleared.'))api('race-reset',{category:c}).then(load)}
 function finish(bib){return api('finish',{bib:bib}).then(function(j){return load().then(function(){var R=ranks();flash('finMsg',(j.already?'ℹ️ Already finished: ':'🏁 ')+who(j.entry)+' — Position '+R[j.entry.bib_no]+' — '+fmt(j.elapsed,2))})}).catch(function(e){flash('finMsg','❌ '+e.message,1)})}
 function finCode(t){var b=bibOf(t);if(b)finish(b)}
@@ -193,12 +201,15 @@ function finBox(){var b=bibOf($('fb').value);if(!b)return flash('finMsg','❌ En
 $('fb').addEventListener('keydown',function(e){if(e.key==='Enter')finBox()});
 function undo(b){if(confirm('Remove finish time of BIB '+b+'?'))api('unfinish',{bib:b}).then(load)}
 function renderRace(){
-  $('swBox').innerHTML=['M7','M5','KIDS'].map(function(c){var on=!!D.race[c];
-    return'<div class="card"><b>'+CAT[c]+'</b><div class="sw" id="sw_'+c+'">00:00.0</div><div class="row">'+(on?'<span class="chip">⏱ Running</span>':'<button class="o" onclick="startRace(\''+c+'\')">▶ START</button>')+'<button class="s" onclick="resetRace(\''+c+'\')">Reset</button></div></div>'}).join('');
+  $('swBox').innerHTML=['M7','M5','KIDS'].map(function(c){
+    var on=!!D.race[c],st=!!D.stop[c],adm=ROLE==='admin';
+    var chip=!on?'<span class="chip">Not started</span>':(st?'<span class="chip">⏹ Stopped</span>':'<span class="chip">⏱ Running</span>');
+    var btn=adm?((!on?'<button class="o" onclick="startRace(\''+c+'\')">▶ START</button>':(st?'<button class="o" onclick="resumeRace(\''+c+'\')">▶ Resume</button>':'<button class="r" onclick="stopRace(\''+c+'\')">⏹ STOP</button>'))+'<button class="s" onclick="resetRace(\''+c+'\')">Reset</button>'):'';
+    return'<div class="card"><b>'+CAT[c]+'</b><div class="sw" id="sw_'+c+'">00:00.0</div><div class="row">'+chip+btn+'</div></div>'}).join('');
   var R=ranks(),F=D.rows.filter(function(r){return r.finish_at&&D.race[r.category]}).sort(function(a,b){return new Date(b.finish_at)-new Date(a.finish_at)});
   $('finList').innerHTML=F.length?'<table><tr><th>Pos</th><th>BIB</th><th>Name</th><th>Event</th><th>Time</th><th></th></tr>'+F.map(function(r){return'<tr><td><b>'+R[r.bib_no]+'</b></td><td>'+r.bib_no+'</td><td>'+esc(r.name)+'</td><td>'+CAT[r.category]+' • '+gl(r.category,r.gender)+'</td><td>'+fmt(el(r),2)+'</td><td><button class="s" onclick="undo('+r.bib_no+')">Undo</button></td></tr>'}).join('')+'</table>':'<p>No finishers yet.</p>';
 }
-setInterval(function(){['M7','M5','KIDS'].forEach(function(c){var e=$('sw_'+c);if(e)e.textContent=D.race[c]?fmt(Date.now()+off-D.race[c]):'00:00.0'})},100);
+setInterval(function(){['M7','M5','KIDS'].forEach(function(c){var e=$('sw_'+c);if(e)e.textContent=D.race[c]?fmt((D.stop[c]||(Date.now()+off))-D.race[c]):'00:00.0'})},100);
 
 /* winners */
 function renderWin(){
