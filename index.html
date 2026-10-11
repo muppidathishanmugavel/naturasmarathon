@@ -136,6 +136,20 @@ footer .row{max-width:380px;margin:20px auto 0}
 .fp div:last-child{grid-column:1/-1}
 @media(min-width:760px){.fp{grid-template-columns:repeat(5,1fr)}.fp div:last-child{grid-column:auto}}
 .pol{margin-top:22px}.pol a{display:inline-block;padding:9px 14px;border:1.5px solid #ffffff88;border-radius:10px;color:#fff;text-decoration:none;margin:4px;font-size:.9rem}
+.bib{background:#fff;border:4px solid var(--g);border-radius:18px;padding:16px;text-align:center;margin-top:14px}
+.bib .bh{background:var(--g);color:#fff;margin:-16px -16px 12px;padding:10px;font-weight:800;font-size:.95rem;letter-spacing:.5px}
+.bib .bn{font-size:4.2rem;font-weight:900;color:var(--b);line-height:1.05}
+.bib .bl{font-size:.8rem;color:#557;font-weight:700}
+.bib .nm{font-size:1.4rem;font-weight:800;margin-top:6px;word-break:break-word}
+.bib .mt{color:#35523f;font-weight:600}
+.bib .rg{margin:8px 0;font-weight:800;color:var(--gd)}
+.bib .qr{display:flex;justify-content:center;margin:8px 0}
+.bib .ft{font-size:.82rem;color:#35523f}
+.mc input{width:100%;font:inherit;padding:14px;border:2px solid #cfe0d5;border-radius:12px;margin:10px 0;text-align:center;font-size:1.15rem}
+.mc .m{padding:10px;border-radius:10px;background:#fff7e0;font-weight:600;margin-top:10px}
+.ntrow{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+.ntb{display:block;width:100%;padding:14px;border:0;border-radius:12px;font:700 1rem inherit;font-family:inherit;background:#0e7a3d;color:#fff;cursor:pointer}
+.ntb:disabled{opacity:.6}
 </style>
 </head>
 <body>
@@ -219,6 +233,15 @@ footer .row{max-width:380px;margin:20px auto 0}
       <a class="btn b-o" href="/register.html" data-en="📝 REGISTER &amp; PAY ONLINE" data-ta="📝 பதிவு செய்து பணம் செலுத்துங்கள்">📝 REGISTER &amp; PAY ONLINE</a>
     </div>
 
+    <div class="card mc" id="mycard" style="text-align:center">
+      <h2 style="font-size:1.35rem" data-en="Already registered? Get my card" data-ta="ஏற்கெனவே பதிவா? என் அட்டையைப் பெறுக">Already registered? Get my card</h2>
+      <p style="color:#35523f" data-en="Enter the mobile number you registered with, then download your entry card as an image or PDF." data-ta="பதிவு செய்த மொபைல் எண்ணை உள்ளிட்டு, உங்கள் நுழைவு அட்டையை படமாகவோ PDF ஆகவோ பதிவிறக்குங்கள்.">Enter the mobile number you registered with, then download your entry card as an image or PDF.</p>
+      <input id="lph" type="tel" inputmode="numeric" maxlength="10" placeholder="10-digit mobile / மொபைல் எண்" autocomplete="tel">
+      <button class="btn b-g" id="lbtn" type="button" data-en="GET MY CARD" data-ta="என் அட்டையைப் பெறு">GET MY CARD</button>
+      <div class="m" id="lmsg" style="display:none"></div>
+      <div id="lout"></div>
+    </div>
+
     <div class="imp">
       <h3 data-en="⚠️ IMPORTANT" data-ta="⚠️ முக்கியம்">⚠️ IMPORTANT</h3>
       <p data-en="Registration is complete only after online payment. Please save your entry card (BIB number). You can get it again anytime with your mobile number on the registration page." data-ta="ஆன்லைனில் பணம் செலுத்திய பின்பே பதிவு நிறைவடையும். உங்கள் நுழைவு அட்டையை (BIB எண்) சேமித்து வையுங்கள். பதிவுப் பக்கத்தில் மொபைல் எண் மூலம் எப்போது வேண்டுமானாலும் மீண்டும் பெறலாம்.">Registration is complete only after online payment. Please save your entry card (BIB number). You can get it again anytime with your mobile number on the registration page.</p>
@@ -288,6 +311,53 @@ function setLang(l){
 }
 var s='en';try{s=localStorage.getItem('lang')||'en'}catch(e){}
 setLang(s);
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script>
+var NTCAT={KIDS:'Kids Indoor Marathon',M5:'5 KM Marathon',M7:'7 KM Marathon',AZ:'Bodybuilding'};
+function ntShow(out,c){
+  out.innerHTML='';var im=new Image();im.src=c.toDataURL('image/png');im.style.cssText='width:100%;border-radius:12px;margin-top:12px;border:1px solid #cfe0d5';out.appendChild(im);
+  var p=document.createElement('p');p.style.cssText='text-align:center;font-weight:600;margin-top:6px';
+  p.textContent='If it did not download, long-press the image to save. / பதிவிறக்கம் ஆகவில்லை என்றால் படத்தை அழுத்திப் பிடித்துச் சேமிக்கவும்.';out.appendChild(p);
+}
+function ntCard(e){
+  var w=document.createElement('div');
+  w.innerHTML='<div class="bib"><div class="bh">NATURA\'S TRUST MARATHON 2026</div><div class="bl">BIB NO</div><div class="bn"></div><div class="nm"></div><div class="mt"></div><div class="rg"></div><div class="qr"></div><div class="ft">Sun, 25 Oct 2026 • Mukkudal, Thamirabarani Riverbank</div></div>'+
+  '<div class="ntrow"><button type="button" class="ntb d1">⬇ IMAGE (PNG)</button><button type="button" class="ntb d2">⬇ PDF</button></div><div class="out"></div>';
+  var b=w.firstChild,out=w.querySelector('.out'),d1=w.querySelector('.d1'),d2=w.querySelector('.d2');
+  b.querySelector('.bn').textContent=e.bib_no;
+  b.querySelector('.nm').textContent=e.name;
+  b.querySelector('.mt').textContent=(NTCAT[e.category]||e.category)+' • '+(e.gender==='F'?'Female':'Male')+' • Age '+e.age;
+  b.querySelector('.rg').textContent=e.reg_no;
+  new QRCode(b.querySelector('.qr'),{text:'NT:'+e.bib_no,width:140,height:140});
+  function shot(){return html2canvas(b,{scale:2,backgroundColor:'#ffffff'})}
+  d1.onclick=function(){d1.disabled=true;
+    shot().then(function(c){c.toBlob(function(bl){var a=document.createElement('a');a.href=URL.createObjectURL(bl);a.download='NaturaTrust-BIB'+e.bib_no+'.png';document.body.appendChild(a);a.click();a.remove();ntShow(out,c);d1.disabled=false},'image/png')})
+    .catch(function(){d1.disabled=false;out.textContent='Could not create the image. Please take a screenshot. / ஸ்கிரீன்ஷாட் எடுக்கவும்.'})};
+  d2.onclick=function(){d2.disabled=true;
+    shot().then(function(c){var J=window.jspdf&&window.jspdf.jsPDF;
+      if(J){var d=new J({unit:'mm',format:'a4'}),wd=110,h=c.height*wd/c.width;d.addImage(c.toDataURL('image/jpeg',0.95),'JPEG',50,15,wd,h);d.save('NaturaTrust-BIB'+e.bib_no+'.pdf')}
+      ntShow(out,c);d2.disabled=false})
+    .catch(function(){d2.disabled=false;out.textContent='Could not create the PDF. Please take a screenshot. / ஸ்கிரீன்ஷாட் எடுக்கவும்.'})};
+  return w;
+}
+
+document.getElementById('lbtn').addEventListener('click',function(){
+  var $=function(i){return document.getElementById(i)},p=$('lph').value.trim(),m=$('lmsg'),b=$('lbtn');
+  m.style.display='none';$('lout').innerHTML='';
+  function say(t){m.textContent=t;m.style.display='block'}
+  if(!/^[6-9]\d{9}$/.test(p))return say('Enter a valid 10-digit mobile number. / சரியான 10 இலக்க எண்ணை உள்ளிடுங்கள்.');
+  b.disabled=true;
+  fetch('/api/get-entry',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({phone:p})})
+  .then(function(r){return r.json().catch(function(){return{}}).then(function(j){if(!r.ok)throw new Error(j.error||'Server error');return j})})
+  .then(function(j){b.disabled=false;var L=j.entries||[];
+    if(!L.length)return say('No paid registration found for this number. If you have paid, call 74185 84497. / இந்த எண்ணில் பதிவு இல்லை. பணம் செலுத்தியிருந்தால் 74185 84497-ஐ அழையுங்கள்.');
+    L.forEach(function(e){$('lout').appendChild(ntCard(e))});
+    $('lout').scrollIntoView({behavior:'smooth',block:'start'});
+  }).catch(function(er){b.disabled=false;say(er.message)});
+});
 </script>
 </body>
 </html>
