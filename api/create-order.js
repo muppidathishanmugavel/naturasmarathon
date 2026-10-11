@@ -53,7 +53,10 @@ module.exports = async (req, res) => {
     const o = await r.json().catch(() => ({}));
     if (!r.ok || !o.payment_session_id) {
       console.error('Cashfree error', r.status, JSON.stringify(o));
-      return res.status(502).json({ error: 'Payment gateway error: ' + (o.message || 'HTTP ' + r.status) });
+      // TEMPORARY diagnostics (safe parts only) - remove once Live works
+      const sec = String(process.env.CASHFREE_SECRET_KEY || '').trim();
+      const diag = ' [mode=' + (PROD ? 'production' : 'sandbox') + ', secret starts with "' + sec.slice(0, 13) + '", secretLen=' + sec.length + ', appIdLen=' + String(process.env.CASHFREE_APP_ID || '').trim().length + ']';
+      return res.status(502).json({ error: 'Payment gateway error: ' + (o.message || 'HTTP ' + r.status) + diag });
     }
 
     await sb('nt_registrations', {
