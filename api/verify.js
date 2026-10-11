@@ -1,11 +1,5 @@
-const { markPaid } = require('./_lib');
+const { markPaid, cf } = require('./_lib');
 
-const BASE = process.env.CASHFREE_ENV === 'production' ? 'https://api.cashfree.com/pg' : 'https://sandbox.cashfree.com/pg';
-const H = () => ({
-  'x-client-id': String(process.env.CASHFREE_APP_ID || '').trim(),
-  'x-client-secret': String(process.env.CASHFREE_SECRET_KEY || '').trim(),
-  'x-api-version': '2023-08-01'
-});
 
 module.exports = async (req, res) => {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
@@ -14,14 +8,14 @@ module.exports = async (req, res) => {
     if (!/^NT\d{10,}$/.test(orderId)) return res.status(400).json({ error: 'Invalid order' });
 
     // Ask Cashfree directly - never trust the browser
-    const r = await fetch(BASE + '/orders/' + orderId, { headers: H() });
+    const r = await fetch(cf().base + '/orders/' + orderId, { headers: cf().headers });
     const o = await r.json().catch(() => ({}));
     if (!r.ok) return res.status(502).json({ error: 'Could not check payment status' });
     if (o.order_status !== 'PAID') return res.status(402).json({ error: 'Payment not confirmed yet' });
 
     let payId = orderId;
     try {
-      const pr = await fetch(BASE + '/orders/' + orderId + '/payments', { headers: H() });
+      const pr = await fetch(cf().base + '/orders/' + orderId + '/payments', { headers: cf().headers });
       const list = await pr.json();
       const ok = Array.isArray(list) && list.find((p) => p.payment_status === 'SUCCESS');
       if (ok) payId = String(ok.cf_payment_id);
