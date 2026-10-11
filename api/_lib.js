@@ -25,4 +25,18 @@ async function markPaid(orderId, paymentId) {
   return ex && ex[0] ? ex[0] : null;
 }
 
-module.exports = { sb, markPaid, COLS };
+// Cashfree config. The mode is detected from the secret key itself (cfsk_ma_prod_... / cfsk_ma_test_...),
+// so a wrong CASHFREE_ENV value can never cause a sandbox/production mismatch.
+function cf() {
+  const id = String(process.env.CASHFREE_APP_ID || '').trim();
+  const sec = String(process.env.CASHFREE_SECRET_KEY || '').trim();
+  const env = String(process.env.CASHFREE_ENV || '').trim().toLowerCase();
+  const prod = sec.startsWith('cfsk_ma_prod') ? true : sec.startsWith('cfsk_ma_test') ? false : env === 'production';
+  return {
+    mode: prod ? 'production' : 'sandbox',
+    base: prod ? 'https://api.cashfree.com/pg' : 'https://sandbox.cashfree.com/pg',
+    headers: { 'x-client-id': id, 'x-client-secret': sec, 'x-api-version': '2023-08-01' }
+  };
+}
+
+module.exports = { sb, markPaid, COLS, cf };
