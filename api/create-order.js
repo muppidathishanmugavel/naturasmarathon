@@ -1,7 +1,5 @@
-const { sb } = require('./_lib');
+const { sb, cf } = require('./_lib');
 
-const PROD = process.env.CASHFREE_ENV === 'production';
-const BASE = PROD ? 'https://api.cashfree.com/pg' : 'https://sandbox.cashfree.com/pg';
 const PH = /^[6-9]\d{9}$/;
 const s = (v, n) => String(v == null ? '' : v).trim().slice(0, n);
 
@@ -19,6 +17,7 @@ module.exports = async (req, res) => {
     const missing = ['CASHFREE_APP_ID', 'CASHFREE_SECRET_KEY', 'SUPABASE_URL', 'SUPABASE_SERVICE_ROLE_KEY'].filter((k) => !process.env[k]);
     if (missing.length) return res.status(500).json({ error: 'Server setup incomplete. Missing in Vercel: ' + missing.join(', ') });
 
+    const C = cf();
     const d = req.body || {};
     const event = d.event === 'aanazhagan' ? 'aanazhagan' : d.event === 'marathon' ? 'marathon' : null;
     const age = parseInt(d.age, 10);
@@ -33,14 +32,9 @@ module.exports = async (req, res) => {
     const amount = event === 'aanazhagan' ? 300 : 200;
     const orderId = 'NT' + Date.now() + Math.floor(Math.random() * 9000 + 1000);
 
-    const r = await fetch(BASE + '/orders', {
+    const r = await fetch(C.base + '/orders', {
       method: 'POST',
-      headers: {
-        'x-client-id': process.env.CASHFREE_APP_ID.trim(),
-        'x-client-secret': process.env.CASHFREE_SECRET_KEY.trim(),
-        'x-api-version': '2023-08-01',
-        'Content-Type': 'application/json'
-      },
+      headers: { ...C.headers, 'Content-Type': 'application/json' },
       body: JSON.stringify({
         order_id: orderId,
         order_amount: amount,
@@ -55,7 +49,7 @@ module.exports = async (req, res) => {
       console.error('Cashfree error', r.status, JSON.stringify(o));
       // TEMPORARY diagnostics (safe parts only) - remove once Live works
       const sec = String(process.env.CASHFREE_SECRET_KEY || '').trim();
-      const diag = ' [mode=' + (PROD ? 'production' : 'sandbox') + ', secret starts with "' + sec.slice(0, 13) + '", secretLen=' + sec.length + ', appIdLen=' + String(process.env.CASHFREE_APP_ID || '').trim().length + ']';
+      const diag = ' [mode=' + C.mode + ', secret starts with "' + sec.slice(0, 13) + '", secretLen=' + sec.length + ', appIdLen=' + String(process.env.CASHFREE_APP_ID || '').trim().length + ']';
       return res.status(502).json({ error: 'Payment gateway error: ' + (o.message || 'HTTP ' + r.status) + diag });
     }
 
@@ -63,7 +57,7 @@ module.exports = async (req, res) => {
       method: 'POST',
       body: JSON.stringify({ event, category: cat, name, age, gender, phone, city: city || null, amount, payment_status: 'pending', razorpay_order_id: orderId })
     });
-    res.status(200).json({ order_id: orderId, payment_session_id: o.payment_session_id, mode: PROD ? 'production' : 'sandbox' });
+    res.status(200).json({ order_id: orderId, payment_session_id: o.payment_session_id, mode: C.mode });
   } catch (e) {
     console.error(e);
     res.status(500).json({ error: 'Something went wrong: ' + String(e.message).slice(0, 160) });
