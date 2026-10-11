@@ -46,6 +46,9 @@ select:disabled{background:#eef2ef}
 .bib .ft{font-size:.82rem;color:#35523f}
 .out img{width:100%;border-radius:12px;margin-top:12px;border:1px solid #cfe0d5}
 .out p{font-weight:600;margin-top:8px;text-align:center}
+.ntrow{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+.ntb{display:block;width:100%;padding:14px;border:0;border-radius:12px;font:700 1rem inherit;font-family:inherit;background:#0e7a3d;color:#fff;cursor:pointer}
+.ntb:disabled{opacity:.6}
 </style>
 </head>
 <body>
@@ -98,6 +101,7 @@ select:disabled{background:#eef2ef}
 <script src="https://sdk.cashfree.com/js/v3/cashfree.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script>
 var CONTACT="74185 84497";
 var CATS={KIDS:'Kids Indoor Marathon',M5:'5 KM Marathon',M7:'7 KM Marathon',AZ:'Aanazhagan'};
@@ -126,26 +130,34 @@ function api(name,body){
 }
 function msg(t){$('msg').textContent=t;show('msg',!!t);if(t)$('msg').scrollIntoView({behavior:'smooth',block:'center'})}
 
-function makeCard(e){
+var NTCAT={KIDS:'Kids Indoor Marathon',M5:'5 KM Marathon',M7:'7 KM Marathon',AZ:'Bodybuilding'};
+function ntShow(out,c){
+  out.innerHTML='';var im=new Image();im.src=c.toDataURL('image/png');im.style.cssText='width:100%;border-radius:12px;margin-top:12px;border:1px solid #cfe0d5';out.appendChild(im);
+  var p=document.createElement('p');p.style.cssText='text-align:center;font-weight:600;margin-top:6px';
+  p.textContent='If it did not download, long-press the image to save. / பதிவிறக்கம் ஆகவில்லை என்றால் படத்தை அழுத்திப் பிடித்துச் சேமிக்கவும்.';out.appendChild(p);
+}
+function ntCard(e){
   var w=document.createElement('div');
-  w.innerHTML='<div class="bib"><div class="bh">NATURA\'S TRUST MARATHON 2026</div><div class="bl">BIB NO</div><div class="bn"></div><div class="nm"></div><div class="mt"></div><div class="rg"></div><div class="qr"></div><div class="ft">Sun, 25 Oct 2026 • Mukkudal, Thamirabarani Riverbank</div></div><button type="button" class="btn g">📥 SAVE CARD AS IMAGE / அட்டையை படமாகச் சேமி</button><div class="out"></div>';
-  var b=w.firstChild;
+  w.innerHTML='<div class="bib"><div class="bh">NATURA\'S TRUST MARATHON 2026</div><div class="bl">BIB NO</div><div class="bn"></div><div class="nm"></div><div class="mt"></div><div class="rg"></div><div class="qr"></div><div class="ft">Sun, 25 Oct 2026 • Mukkudal, Thamirabarani Riverbank</div></div>'+
+  '<div class="ntrow"><button type="button" class="ntb d1">⬇ IMAGE (PNG)</button><button type="button" class="ntb d2">⬇ PDF</button></div><div class="out"></div>';
+  var b=w.firstChild,out=w.querySelector('.out'),d1=w.querySelector('.d1'),d2=w.querySelector('.d2');
   b.querySelector('.bn').textContent=e.bib_no;
   b.querySelector('.nm').textContent=e.name;
-  b.querySelector('.mt').textContent=(CATS[e.category]||e.category)+' • '+(e.gender==='F'?'Female':'Male')+' • Age '+e.age;
+  b.querySelector('.mt').textContent=(NTCAT[e.category]||e.category)+' • '+(e.gender==='F'?'Female':'Male')+' • Age '+e.age;
   b.querySelector('.rg').textContent=e.reg_no;
   new QRCode(b.querySelector('.qr'),{text:'NT:'+e.bib_no,width:140,height:140});
-  var btn=w.querySelector('button'),out=w.querySelector('.out');
-  btn.onclick=function(){
-    btn.disabled=true;
-    html2canvas(b,{scale:2,backgroundColor:'#ffffff'}).then(function(c){
-      out.innerHTML='';var im=new Image();im.src=c.toDataURL('image/png');out.appendChild(im);
-      var p=document.createElement('p');p.textContent='Long-press the image to save. / படத்தை அழுத்திப் பிடித்துச் சேமிக்கவும்.';out.appendChild(p);
-      btn.disabled=false;
-    }).catch(function(){btn.disabled=false;out.textContent='Could not create image. Please take a screenshot. / ஸ்கிரீன்ஷாட் எடுக்கவும்.'});
-  };
+  function shot(){return html2canvas(b,{scale:2,backgroundColor:'#ffffff'})}
+  d1.onclick=function(){d1.disabled=true;
+    shot().then(function(c){c.toBlob(function(bl){var a=document.createElement('a');a.href=URL.createObjectURL(bl);a.download='NaturaTrust-BIB'+e.bib_no+'.png';document.body.appendChild(a);a.click();a.remove();ntShow(out,c);d1.disabled=false},'image/png')})
+    .catch(function(){d1.disabled=false;out.textContent='Could not create the image. Please take a screenshot. / ஸ்கிரீன்ஷாட் எடுக்கவும்.'})};
+  d2.onclick=function(){d2.disabled=true;
+    shot().then(function(c){var J=window.jspdf&&window.jspdf.jsPDF;
+      if(J){var d=new J({unit:'mm',format:'a4'}),wd=110,h=c.height*wd/c.width;d.addImage(c.toDataURL('image/jpeg',0.95),'JPEG',50,15,wd,h);d.save('NaturaTrust-BIB'+e.bib_no+'.pdf')}
+      ntShow(out,c);d2.disabled=false})
+    .catch(function(){d2.disabled=false;out.textContent='Could not create the PDF. Please take a screenshot. / ஸ்கிரீன்ஷாட் எடுக்கவும்.'})};
   return w;
 }
+function makeCard(e){return ntCard(e)}
 
 $('f').addEventListener('submit',function(x){
   x.preventDefault();msg('');
