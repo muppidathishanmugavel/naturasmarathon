@@ -49,6 +49,13 @@ select:disabled{background:#eef2ef}
 .ntrow{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
 .ntb{display:block;width:100%;padding:14px;border:0;border-radius:12px;font:700 1rem inherit;font-family:inherit;background:#0e7a3d;color:#fff;cursor:pointer}
 .ntb:disabled{opacity:.6}
+.ntshare{margin-top:16px;padding:14px;border-radius:14px;background:#f3faf5;border:2px dashed #b7dcc4}
+.ntsh{font-weight:800;color:#0a4f2a;text-align:center;margin-bottom:10px}
+.ntshare a.ntb{text-decoration:none;text-align:center;color:#fff}
+.nthint{margin-top:8px;text-align:center;font-weight:600;color:#0a4f2a;min-height:1.2em}
+.ntshare{display:none}
+.ntshare.on{display:block}
+.ntsm{background:#fff;border-radius:10px;padding:10px;margin-bottom:10px;font-size:.92rem;color:#35523f;white-space:pre-line;word-break:break-word}
 </style>
 </head>
 <body>
@@ -131,30 +138,81 @@ function api(name,body){
 function msg(t){$('msg').textContent=t;show('msg',!!t);if(t)$('msg').scrollIntoView({behavior:'smooth',block:'center'})}
 
 var NTCAT={KIDS:'Kids Indoor Marathon',M5:'5 KM Marathon',M7:'7 KM Marathon',AZ:'Bodybuilding'};
+var NTLINK='https://naturasmarathon.vercel.app/';
+var NTMSG="I joined the marathon to save Thamirabarani and stand against drug abuse. Come and join with me! 🌿🏃\nநான் மாரத்தானில் இணைந்துவிட்டேன் – தாமிரபரணியைக் காப்போம், போதைக்கு எதிராக நிற்போம். நீங்களும் என்னுடன் இணையுங்கள்!";
 function ntShow(out,c){
   out.innerHTML='';var im=new Image();im.src=c.toDataURL('image/png');im.style.cssText='width:100%;border-radius:12px;margin-top:12px;border:1px solid #cfe0d5';out.appendChild(im);
   var p=document.createElement('p');p.style.cssText='text-align:center;font-weight:600;margin-top:6px';
   p.textContent='If it did not download, long-press the image to save. / பதிவிறக்கம் ஆகவில்லை என்றால் படத்தை அழுத்திப் பிடித்துச் சேமிக்கவும்.';out.appendChild(p);
 }
+function ntCopy(t,done){
+  function fb(){var a=document.createElement('textarea');a.value=t;document.body.appendChild(a);a.select();try{document.execCommand('copy')}catch(e){}document.body.removeChild(a);done()}
+  if(navigator.clipboard&&window.isSecureContext)navigator.clipboard.writeText(t).then(done,fb);else fb();
+}
 function ntCard(e){
+  var FULL=NTMSG+'\n'+NTLINK,enc=encodeURIComponent;
   var w=document.createElement('div');
   w.innerHTML='<div class="bib"><div class="bh">NATURA\'S TRUST MARATHON 2026</div><div class="bl">BIB NO</div><div class="bn"></div><div class="nm"></div><div class="mt"></div><div class="rg"></div><div class="qr"></div><div class="ft">Sun, 25 Oct 2026 • Mukkudal, Thamirabarani Riverbank</div></div>'+
-  '<div class="ntrow"><button type="button" class="ntb d1">⬇ IMAGE (PNG)</button><button type="button" class="ntb d2">⬇ PDF</button></div><div class="out"></div>';
-  var b=w.firstChild,out=w.querySelector('.out'),d1=w.querySelector('.d1'),d2=w.querySelector('.d2');
+  '<div class="ntrow"><button type="button" class="ntb d1">⬇ IMAGE (PNG)</button><button type="button" class="ntb d2">⬇ PDF</button></div>'+
+  '<div class="out"></div>'+
+  '<div class="ntshare"><div class="ntsh">📣 Share with your friends? (optional)<br>நண்பர்களுடன் பகிர விருப்பமா? (விருப்பம்)</div>'+
+  '<div class="ntsm"></div>'+
+  '<button type="button" class="ntb s1" style="background:#0b5ea8">📤 SHARE (WhatsApp Status, Instagram, Facebook…)</button>'+
+  '<div class="ntrow" style="margin-top:8px"><a class="ntb sw" target="_blank" rel="noopener" style="background:#25d366;color:#053b1a">WhatsApp</a><a class="ntb sf" target="_blank" rel="noopener" style="background:#1877f2">Facebook</a></div>'+
+  '<button type="button" class="ntb si" style="background:#c13584;margin-top:8px">Instagram</button>'+
+  '<button type="button" class="ntb sk" style="background:#e3efe8;color:#0a4f2a;margin-top:8px">Skip / இப்போது வேண்டாம்</button>'+
+  '<div class="nthint"></div></div>';
+  var b=w.firstChild,out=w.querySelector('.out'),d1=w.querySelector('.d1'),d2=w.querySelector('.d2'),panel=w.querySelector('.ntshare'),
+      s1=w.querySelector('.s1'),si=w.querySelector('.si'),sk=w.querySelector('.sk'),hint=w.querySelector('.nthint');
   b.querySelector('.bn').textContent=e.bib_no;
   b.querySelector('.nm').textContent=e.name;
   b.querySelector('.mt').textContent=(NTCAT[e.category]||e.category)+' • '+(e.gender==='F'?'Female':'Male')+' • Age '+e.age;
   b.querySelector('.rg').textContent=e.reg_no;
   new QRCode(b.querySelector('.qr'),{text:'NT:'+e.bib_no,width:140,height:140});
-  function shot(){return html2canvas(b,{scale:2,backgroundColor:'#ffffff'})}
+  w.querySelector('.ntsm').textContent=NTMSG+' '+NTLINK;
+  w.querySelector('.sw').href='https://wa.me/?text='+enc(FULL);
+  w.querySelector('.sf').href='https://www.facebook.com/sharer/sharer.php?u='+enc(NTLINK)+'&quote='+enc(NTMSG);
+  var cache=null;
+  function getShot(){
+    if(cache)return Promise.resolve(cache);
+    return html2canvas(b,{scale:2,backgroundColor:'#ffffff'}).then(function(c){return new Promise(function(r){c.toBlob(function(bl){cache={c:c,bl:bl};r(cache)},'image/png')})});
+  }
+  setTimeout(function(){getShot().catch(function(){})},900); // prepare the image so Share opens instantly
+  function askShare(){panel.classList.add('on');hint.textContent='';setTimeout(function(){try{panel.scrollIntoView({behavior:'smooth',block:'center'})}catch(x){}},300)}
   d1.onclick=function(){d1.disabled=true;
-    shot().then(function(c){c.toBlob(function(bl){var a=document.createElement('a');a.href=URL.createObjectURL(bl);a.download='NaturaTrust-BIB'+e.bib_no+'.png';document.body.appendChild(a);a.click();a.remove();ntShow(out,c);d1.disabled=false},'image/png')})
+    getShot().then(function(s){var a=document.createElement('a');a.href=URL.createObjectURL(s.bl);a.download='NaturaTrust-BIB'+e.bib_no+'.png';document.body.appendChild(a);a.click();a.remove();ntShow(out,s.c);d1.disabled=false;askShare()})
     .catch(function(){d1.disabled=false;out.textContent='Could not create the image. Please take a screenshot. / ஸ்கிரீன்ஷாட் எடுக்கவும்.'})};
   d2.onclick=function(){d2.disabled=true;
-    shot().then(function(c){var J=window.jspdf&&window.jspdf.jsPDF;
-      if(J){var d=new J({unit:'mm',format:'a4'}),wd=110,h=c.height*wd/c.width;d.addImage(c.toDataURL('image/jpeg',0.95),'JPEG',50,15,wd,h);d.save('NaturaTrust-BIB'+e.bib_no+'.pdf')}
-      ntShow(out,c);d2.disabled=false})
+    getShot().then(function(s){var J=window.jspdf&&window.jspdf.jsPDF;
+      if(J){var d=new J({unit:'mm',format:'a4'}),wd=110,h=s.c.height*wd/s.c.width;d.addImage(s.c.toDataURL('image/jpeg',0.95),'JPEG',50,15,wd,h);d.save('NaturaTrust-BIB'+e.bib_no+'.pdf')}
+      ntShow(out,s.c);d2.disabled=false;askShare()})
     .catch(function(){d2.disabled=false;out.textContent='Could not create the PDF. Please take a screenshot. / ஸ்கிரீன்ஷாட் எடுக்கவும்.'})};
+  function say(t){hint.textContent=t}
+  function textShare(){
+    if(navigator.share)return navigator.share({title:"Natura's Trust Marathon",text:NTMSG,url:NTLINK}).catch(function(){});
+    ntCopy(FULL,function(){say('Message copied – paste it anywhere. / செய்தி நகலெடுக்கப்பட்டது.')});
+  }
+  // Share sheet: lets the person pick WhatsApp Status, Instagram, Facebook... with the card image attached
+  s1.onclick=function(){
+    if(!navigator.share){return textShare()}
+    var ready=cache?Promise.resolve(cache):getShot().catch(function(){return null});
+    ready.then(function(s){
+      if(s&&window.File&&navigator.canShare){
+        var f=new File([s.bl],'NaturaTrust-BIB'+e.bib_no+'.png',{type:'image/png'});
+        if(navigator.canShare({files:[f]}))return navigator.share({files:[f],title:"Natura's Trust Marathon",text:FULL}).catch(function(){});
+      }
+      return textShare();
+    });
+  };
+  // Instagram cannot be opened with a ready-made message, so we copy it and open the app
+  si.onclick=function(){
+    ntCopy(FULL,function(){
+      say('Message copied. Instagram is opening – paste it in your story/post and add your card image. / செய்தி நகலெடுக்கப்பட்டது; Instagram-ல் ஒட்டுங்கள்.');
+      var t=setTimeout(function(){if(!document.hidden)window.open('https://www.instagram.com/','_blank')},1300);
+      try{location.href='instagram://story-camera'}catch(x){clearTimeout(t);window.open('https://www.instagram.com/','_blank')}
+    });
+  };
+  sk.onclick=function(){panel.classList.remove('on')};
   return w;
 }
 function makeCard(e){return ntCard(e)}
