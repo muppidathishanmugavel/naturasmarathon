@@ -23,6 +23,7 @@ table{width:100%;border-collapse:collapse;font-size:.92rem}th,td{padding:7px 8px
 h3{color:var(--gd);margin:14px 0 6px}
 video{width:100%;max-height:320px;border-radius:12px;background:#000}
 .bigin{font-size:1.3rem;width:150px}
+.wal{display:inline-block;background:#25d366;color:#053b1a;font-weight:700;padding:8px 12px;border-radius:10px;text-decoration:none}
 @media print{header,.tabs,.noprint{display:none!important}.card{box-shadow:none}}
 </style></head><body>
 <div id="login" class="card" style="max-width:380px;margin:60px auto">
@@ -39,6 +40,7 @@ video{width:100%;max-height:320px;border-radius:12px;background:#000}
   <button data-t="att">✅ Attendance</button>
   <button data-t="race">⏱️ Race</button>
   <button data-t="win">🏆 Winners</button>
+  <button data-t="rem">🔔 Reminders</button>
 </div>
 
 <section id="t_reg" class="tp">
@@ -81,6 +83,15 @@ video{width:100%;max-height:320px;border-radius:12px;background:#000}
     <p style="margin-top:12px;color:#557">Bodybuilding is judged on stage – enter its winners manually.</p>
   </div>
 </section>
+<section id="t_rem" class="tp hide">
+  <div class="card">
+    <h3 style="margin-top:0">🔔 Send reminders (before the event)</h3>
+    <div class="row" id="remBtns"></div>
+    <div class="row noprint"><button class="s" onclick="copyNums()">📋 Copy pending numbers</button><button class="s" onclick="copyMsg()">📋 Copy message (for broadcast)</button></div>
+    <div id="remInfo" class="msg hide"></div>
+    <div class="sc" id="remList"></div>
+  </div>
+</section>
 </main></div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jsQR/1.4.0/jsQR.min.js"></script>
@@ -107,7 +118,7 @@ function logout(){T=null;try{sessionStorage.removeItem('t')}catch(e){}stopScan()
 function enter(){
   $('login').classList.add('hide');$('app').classList.remove('hide');
   var adm=ROLE==='admin';$('roleName').textContent=adm?'Admin':'Organiser';
-  document.querySelectorAll('.tabs button').forEach(function(b){var t=b.getAttribute('data-t');b.classList.toggle('hide',!adm&&t==='reg')});
+  document.querySelectorAll('.tabs button').forEach(function(b){var t=b.getAttribute('data-t');b.classList.toggle('hide',!adm&&(t==='reg'||t==='rem'))});
   document.querySelector('.tabs button[data-t="'+(adm?'reg':'att')+'"]').click();
   load();
 }
@@ -134,19 +145,19 @@ function ranks(){var g={},R={};
   D.rows.filter(function(r){return r.finish_at&&D.race[r.category]}).sort(function(a,b){return new Date(a.finish_at)-new Date(b.finish_at)}).forEach(function(r){var k=r.category+r.gender;g[k]=(g[k]||0)+1;R[r.bib_no]=g[k]});return R}
 function el(r){return new Date(r.finish_at).getTime()-D.race[r.category]}
 
-function render(){if(ROLE==='admin')renderReg();renderWin();renderAtt();renderRace()}
+function render(){if(ROLE==='admin'){renderReg();renderRem()}renderWin();renderAtt();renderRace()}
 
 function renderReg(){
   var paid=D.rows.filter(function(r){return r.payment_status==='paid'}),cn={};
   paid.forEach(function(r){cn[r.category]=(cn[r.category]||0)+1});
-  $('sum').innerHTML='<span class="chip">Paid: <b>'+paid.length+'</b></span>'+Object.keys(CAT).map(function(c){return'<span class="chip">'+CAT[c]+': <b>'+(cn[c]||0)+'</b></span>'}).join('')+'<span class="chip">Present: <b>'+paid.filter(function(r){return r.attended_at}).length+'</b></span>';
+  $('sum').innerHTML='<span class="chip">Paid: <b>'+paid.length+'</b></span>'+Object.keys(CAT).map(function(c){return'<span class="chip">'+CAT[c]+': <b>'+(cn[c]||0)+'</b></span>'}).join('')+'<span class="chip">Present: <b>'+paid.filter(function(r){return r.attended_at}).length+'</b></span><span class="chip">No Aadhaar: <b>'+paid.filter(function(r){return!r.aadhaar_last4}).length+'</b></span>';
   var q=$('q').value.trim().toLowerCase(),c=$('fc').value;
   VIEW=D.rows.filter(function(r){return(!c||r.category===c)&&(!q||(r.name+' '+r.phone+' '+(r.bib_no||'')+' '+(r.city||'')).toLowerCase().indexOf(q)>-1)});
-  $('regList').innerHTML='<table><tr><th>BIB</th><th>Name</th><th>Event</th><th>Group</th><th>Age</th><th>Phone</th><th>City</th><th>Status</th><th>Present</th></tr>'+
-  VIEW.map(function(r){return'<tr><td><b>'+(r.bib_no||'-')+'</b></td><td>'+esc(r.name)+'</td><td>'+CAT[r.category]+'</td><td>'+gl(r.category,r.gender)+'</td><td>'+r.age+'</td><td>'+esc(r.phone)+'</td><td>'+esc(r.city||'')+'</td><td>'+r.payment_status+'</td><td>'+(r.attended_at?'✅':'')+'</td></tr>'}).join('')+'</table>';
+  $('regList').innerHTML='<table><tr><th>BIB</th><th>Name</th><th>Event</th><th>Group</th><th>Age</th><th>DOB</th><th>Phone</th><th>City</th><th>Aadhaar</th><th>Status</th><th>Present</th></tr>'+
+  VIEW.map(function(r){return'<tr><td><b>'+(r.bib_no||'-')+'</b></td><td>'+esc(r.name)+'</td><td>'+CAT[r.category]+'</td><td>'+gl(r.category,r.gender)+'</td><td>'+r.age+'</td><td>'+esc(r.date_of_birth||'')+'</td><td>'+esc(r.phone)+'</td><td>'+esc(r.city||'')+'</td><td>'+(r.aadhaar_last4?esc(r.aadhaar_last4):'—')+'</td><td>'+r.payment_status+'</td><td>'+(r.attended_at?'✅':'')+'</td></tr>'}).join('')+'</table>';
 }
 function csv(){
-  var rows=[['BIB','Reg No','Name','Age','Group','Event','Phone','City','Amount','Status','Paid At','Present','Finish Time']].concat(VIEW.map(function(r){return[r.bib_no||'',r.reg_no||'',r.name,r.age,gl(r.category,r.gender),CAT[r.category],r.phone,r.city||'',r.amount,r.payment_status,r.paid_at||'',r.attended_at?'Yes':'No',(r.finish_at&&D.race[r.category])?fmt(el(r),2):'']}));
+  var rows=[['BIB','Reg No','Name','Age','DOB','Group','Event','Phone','City','Aadhaar last 4','Amount','Status','Paid At','Present','Finish Time']].concat(VIEW.map(function(r){return[r.bib_no||'',r.reg_no||'',r.name,r.age,r.date_of_birth||'',gl(r.category,r.gender),CAT[r.category],r.phone,r.city||'',r.aadhaar_last4||'',r.amount,r.payment_status,r.paid_at||'',r.attended_at?'Yes':'No',(r.finish_at&&D.race[r.category])?fmt(el(r),2):'']}));
   var s=rows.map(function(a){return a.map(function(x){return'"'+String(x).replace(/"/g,'""')+'"'}).join(',')}).join('\r\n');
   var a=document.createElement('a');a.href=URL.createObjectURL(new Blob(['\ufeff'+s],{type:'text/csv'}));a.download='natura-registrations.csv';a.click();
 }
@@ -210,6 +221,35 @@ function renderRace(){
   $('finList').innerHTML=F.length?'<table><tr><th>Pos</th><th>BIB</th><th>Name</th><th>Event</th><th>Time</th><th></th></tr>'+F.map(function(r){return'<tr><td><b>'+R[r.bib_no]+'</b></td><td>'+r.bib_no+'</td><td>'+esc(r.name)+'</td><td>'+CAT[r.category]+' • '+gl(r.category,r.gender)+'</td><td>'+fmt(el(r),2)+'</td><td><button class="s" onclick="undo('+r.bib_no+')">Undo</button></td></tr>'}).join('')+'</table>':'<p>No finishers yet.</p>';
 }
 setInterval(function(){['M7','M5','KIDS'].forEach(function(c){var e=$('sw_'+c);if(e)e.textContent=D.race[c]?fmt((D.stop[c]||(Date.now()+off))-D.race[c]):'00:00.0'})},100);
+
+/* reminders */
+var REM=[{t:'D10',n:10,day:15},{t:'D5',n:5,day:20},{t:'D2',n:2,day:23},{t:'D1',n:1,day:24}],remSel='D10';
+var COMM='https://chat.whatsapp.com/BLizhCOK5KiBVf1GQwIWob';
+function remText(r,n,name){
+  var en=r.category==='AZ'?'Bodybuilding: 25 Oct 2026, 8:00 AM, Mukkudal Thamirabarani Riverbank':r.category==='KIDS'?'Kids Indoor Marathon: 25 Oct 2026, Mukkudal (timing will be shared in our WhatsApp Community)':CAT[r.category]+' Marathon: 25 Oct 2026, 6:00 AM, Start: Kaliyankulam Bus Stand';
+  var ta=r.category==='AZ'?'உடற்கட்டமைப்பு: 25 அக்டோபர் 2026, காலை 8:00, முக்கூடல் தாமிரபரணி நதிக்கரை':r.category==='KIDS'?'சிறுவர் உள்ளரங்க மாரத்தான்: 25 அக்டோபர் 2026, முக்கூடல் (நேர விவரம் வாட்ஸ்அப் சமூகத்தில் அறிவிக்கப்படும்)':CAT[r.category]+' மாரத்தான்: 25 அக்டோபர் 2026, காலை 6:00, தொடக்கம்: கலியன்குளம் பேருந்து நிலையம்';
+  var left=n===1?'tomorrow':'in '+n+' days',leftT=n===1?'நாளை':n+' நாட்களில்';
+  var bib=r.bib_no?'\nBIB: '+r.bib_no:'';
+  return 'Hello '+name+'! Reminder from Natura\'s Trust: our event is '+left+'.\n'+en+bib+'\nGet your entry card again anytime: '+location.origin+'\nUpdates: '+COMM+
+    '\n\nவணக்கம் '+name+'! Natura\'s Trust நினைவூட்டல்: நிகழ்ச்சி '+leftT+'.\n'+ta+bib+'\nநுழைவு அட்டையை மீண்டும் பெற: '+location.origin;
+}
+function pickRem(t){remSel=t;renderRem()}
+function renderRem(){
+  var now=new Date(),paid=D.rows.filter(function(r){return r.payment_status==='paid'&&r.bib_no});
+  $('remBtns').innerHTML=REM.map(function(x){var due=now.getFullYear()===2026&&now.getMonth()===9&&now.getDate()===x.day;
+    return'<button class="'+(remSel===x.t?'':'s')+'" onclick="pickRem(\''+x.t+'\')">'+x.n+' day'+(x.n>1?'s':'')+' before ('+x.day+' Oct)'+(due?' • TODAY':'')+'</button>'}).join('');
+  var cur=REM.filter(function(x){return x.t===remSel})[0];
+  var sent=function(r){return String(r.reminders||'').split(',').indexOf(remSel)>-1};
+  var done=paid.filter(sent).length;
+  $('remInfo').className='msg';$('remInfo').textContent='Sent: '+done+' of '+paid.length+'  •  Tap "📲 WhatsApp", press Send in WhatsApp, then come back for the next one.';
+  $('remList').innerHTML='<table><tr><th>BIB</th><th>Name</th><th>Phone</th><th>Status</th><th>Send</th></tr>'+paid.map(function(r){
+    var link='https://wa.me/91'+r.phone+'?text='+encodeURIComponent(remText(r,cur.n,r.name));
+    return'<tr><td><b>'+r.bib_no+'</b></td><td>'+esc(r.name)+'</td><td>'+esc(r.phone)+'</td><td>'+(sent(r)?'✅ Sent':'⏳ Pending')+'</td><td><a class="wal" target="_blank" rel="noopener" href="'+link+'" onclick="markRem('+r.bib_no+')">📲 '+(sent(r)?'Send again':'WhatsApp')+'</a></td></tr>'}).join('')+'</table>';
+}
+function markRem(bib){api('remind-mark',{bib:bib,tag:remSel}).then(load).catch(function(e){alert(e.message)})}
+function clip(t,msg){if(navigator.clipboard&&window.isSecureContext)navigator.clipboard.writeText(t).then(function(){alert(msg)},function(){prompt('Copy:',t)});else prompt('Copy:',t)}
+function copyNums(){var n=D.rows.filter(function(r){return r.payment_status==='paid'&&String(r.reminders||'').split(',').indexOf(remSel)<0}).map(function(r){return'+91'+r.phone});clip(n.join('\n'),n.length+' pending numbers copied')}
+function copyMsg(){var n=REM.filter(function(x){return x.t===remSel})[0].n;clip(remText({category:'M7'},n,'participant').replace(/\n(Marathon|7 KM)[^\n]*\n/,'\n'),'Message copied')}
 
 /* winners */
 function renderWin(){
