@@ -41,7 +41,7 @@ module.exports = async (req, res) => {
     if (!['M', 'F'].includes(gender)) return res.status(400).json({ error: 'Invalid gender' });
     if (!PH.test(phone)) return res.status(400).json({ error: 'Enter a valid 10-digit mobile number' });
     if (age === null) return res.status(400).json({ error: 'Please enter a valid date of birth' });
-    if (aad && !/^\d{4}$/.test(aad)) return res.status(400).json({ error: 'Aadhaar: enter exactly the last 4 digits (or leave it empty)' });
+    if (!/^\d{4}$/.test(aad)) return res.status(400).json({ error: 'Please enter the last 4 digits of your Aadhaar' });
     const cat = category(event, age);
     if (!cat) return res.status(400).json({ error: 'Age does not match this event' });
     const amount = event === 'aanazhagan' ? 300 : 200;
@@ -67,7 +67,7 @@ module.exports = async (req, res) => {
 
     await sb('nt_registrations', {
       method: 'POST',
-      body: JSON.stringify({ event, category: cat, name, age, date_of_birth: dob, aadhaar_last4: aad || null, gender, phone, city: city || null, amount, payment_status: 'pending', razorpay_order_id: orderId })
+      body: JSON.stringify({ event, category: cat, name, age, date_of_birth: dob, aadhaar_last4: aad, gender, phone, city: city || null, amount, payment_status: 'pending', razorpay_order_id: orderId })
     });
     res.status(200).json({ order_id: orderId, payment_session_id: o.payment_session_id, mode: C.mode });
   } catch (e) {
