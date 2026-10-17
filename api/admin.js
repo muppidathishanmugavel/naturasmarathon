@@ -9,9 +9,9 @@ const sha = (x) => crypto.createHash('sha256').update(String(x)).digest();
 const same = (a, b) => crypto.timingSafeEqual(sha(a), sha(b));
 const sign = (p) => crypto.createHmac('sha256', PW()).update(p).digest('base64url');
 
-const COLS = 'bib_no,reg_no,name,age,gender,category,event,phone,city,amount,payment_status,paid_at,attended_at,finish_at,created_at';
+const COLS = 'bib_no,reg_no,name,age,date_of_birth,aadhaar_last4,gender,category,event,phone,city,amount,payment_status,paid_at,attended_at,finish_at,created_at,reminders';
 const ORG_COLS = 'bib_no,reg_no,name,age,gender,category,payment_status,attended_at,finish_at'; // no phone / city / amount for organisers
-const ADMIN_ONLY = ['race-start', 'race-stop', 'race-resume', 'race-reset'];
+const ADMIN_ONLY = ['race-start', 'race-stop', 'race-resume', 'race-reset', 'remind-mark'];
 
 function makeToken(role) {
   const p = Buffer.from(JSON.stringify({ exp: Date.now() + 12 * 3600 * 1000, role })).toString('base64url');
@@ -63,6 +63,17 @@ module.exports = async (req, res) => {
       const rows = await allRows(isAdmin && !!b.all, isAdmin ? COLS : ORG_COLS);
       const race = await sb('nt_race?select=category,started_at,stopped_at');
       return res.status(200).json({ rows, race, now: new Date().toISOString(), role: user.role });
+    }
+
+    if (a === 'remind-mark') { // remember that a reminder (D10/D5/D2/D1) was sent to a participant
+      const bib = parseInt(b.bib, 10), tag = String(b.tag || '');
+      if (!bib || !['D10', 'D5', 'D2', 'D1'].includes(tag)) return res.status(400).json({ error: 'Invalid reminder' });
+      const q = 'nt_registrations?bib_no=eq.' + bib + '&payment_status=eq.paid';
+      const cur = (await sb(q + '&select=reminders'))[0];
+      if (!cur) return res.status(404).json({ error: 'BIB not found' });
+      const set = new Set(String(cur.reminders || '').split(',').filter(Boolean)); set.add(tag);
+      await sb(q, { method: 'PATCH', body: JSON.stringify({ reminders: [...set].join(',') }) });
+      return res.status(200).json({ ok: true });
     }
 
     if (ADMIN_ONLY.includes(a)) {
