@@ -82,7 +82,7 @@ select:disabled{background:#eef2ef}
     <div class="info err hide" id="catErr"></div>
     <label>Mobile / மொபைல் எண்<input type="tel" id="phone" inputmode="numeric" maxlength="10" placeholder="10 digits" autocomplete="tel"></label>
     <label>City / ஊர் <small>(optional)</small><input type="text" id="city" maxlength="60"></label>
-    <label>Aadhaar – last 4 digits / ஆதார் கடைசி 4 இலக்கம் <small>(optional)</small><input type="text" id="aadhaar" inputmode="numeric" maxlength="4" placeholder="e.g. 1234" autocomplete="off"></label>
+    <label>Aadhaar – last 4 digits / ஆதார் கடைசி 4 இலக்கம் <small>(required / கட்டாயம்)</small><input type="text" id="aadhaar" inputmode="numeric" maxlength="4" placeholder="e.g. 1234" autocomplete="off"></label>
     <div style="font-size:.85rem;color:#557;margin-top:4px">Enter only the last 4 digits. Never enter the full Aadhaar number. / கடைசி 4 இலக்கம் மட்டும் உள்ளிடுங்கள்; முழு ஆதார் எண்ணை உள்ளிட வேண்டாம்.</div>
     <label class="chk"><input type="checkbox" id="consent"><span>I am medically fit. If under 18, I have parent's permission. / நான் உடல்நலத்துடன் உள்ளேன். 18 வயதுக்குக் கீழ் என்றால் பெற்றோர் அனுமதி உண்டு.</span></label>
     <div class="info err hide" id="msg"></div>
@@ -229,7 +229,7 @@ $('f').addEventListener('submit',function(x){
   if(name.length<2)return msg('Enter your name. / பெயரை உள்ளிடுங்கள்.');
   if(isNaN(age))return msg('Enter your date of birth. / பிறந்த தேதியை உள்ளிடுங்கள்.');
   if(!refresh())return msg('Age does not fit this event. / வயது இந்த நிகழ்ச்சிக்குப் பொருந்தவில்லை.');
-  if(aad&&!/^\d{4}$/.test(aad))return msg('Aadhaar: enter exactly the last 4 digits or leave it empty. / ஆதார்: கடைசி 4 இலக்கம் மட்டும் அல்லது காலியாக விடுங்கள்.');
+  if(!/^\d{4}$/.test(aad))return msg('Enter the last 4 digits of your Aadhaar. / ஆதார் கடைசி 4 இலக்கங்களை உள்ளிடுங்கள்.');
   if(!/^[6-9]\d{9}$/.test(phone))return msg('Enter a valid 10-digit mobile number. / சரியான 10 இலக்க எண்ணை உள்ளிடுங்கள்.');
   if(!$('consent').checked)return msg('Please tick the consent box. / ஒப்புதல் கட்டத்தைத் தேர்வு செய்யுங்கள்.');
   var btn=$('pay');btn.disabled=true;btn.textContent='Please wait… / காத்திருக்கவும்…';
