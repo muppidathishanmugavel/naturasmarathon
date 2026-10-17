@@ -69,19 +69,21 @@ select:disabled{background:#eef2ef}
     <b>Event / நிகழ்ச்சி</b>
     <div class="ev">
       <label><input type="radio" name="event" value="marathon" checked>🏃 Marathon<br><small>₹200</small></label>
-      <label><input type="radio" name="event" value="aanazhagan">💪 Aanazhagan<br><small>₹300</small></label>
+      <label><input type="radio" name="event" value="aanazhagan">💪 Aanazhagan<br><small>₹300 • age 10–17</small></label>
     </div>
     <label>Full name / பெயர்<input type="text" id="name" maxlength="60" autocomplete="name"></label>
     <div class="two">
-      <label>Age / வயது<input type="number" id="age" inputmode="numeric" min="1" max="99"></label>
+      <label>Date of birth / பிறந்த தேதி<input type="date" id="dob" min="1900-01-01" max="2026-10-25"></label>
       <label>Gender / பாலினம்
         <select id="gender"><option value="M">Male / ஆண்</option><option value="F">Female / பெண்</option></select>
       </label>
     </div>
-    <div class="info" id="catInfo">Category / பிரிவு: enter age</div>
+    <div class="info" id="catInfo">Age / Category: enter date of birth / பிறந்த தேதியை உள்ளிடுங்கள்</div>
     <div class="info err hide" id="catErr"></div>
     <label>Mobile / மொபைல் எண்<input type="tel" id="phone" inputmode="numeric" maxlength="10" placeholder="10 digits" autocomplete="tel"></label>
     <label>City / ஊர் <small>(optional)</small><input type="text" id="city" maxlength="60"></label>
+    <label>Aadhaar – last 4 digits / ஆதார் கடைசி 4 இலக்கம் <small>(optional)</small><input type="text" id="aadhaar" inputmode="numeric" maxlength="4" placeholder="e.g. 1234" autocomplete="off"></label>
+    <div style="font-size:.85rem;color:#557;margin-top:4px">Enter only the last 4 digits. Never enter the full Aadhaar number. / கடைசி 4 இலக்கம் மட்டும் உள்ளிடுங்கள்; முழு ஆதார் எண்ணை உள்ளிட வேண்டாம்.</div>
     <label class="chk"><input type="checkbox" id="consent"><span>I am medically fit. If under 18, I have parent's permission. / நான் உடல்நலத்துடன் உள்ளேன். 18 வயதுக்குக் கீழ் என்றால் பெற்றோர் அனுமதி உண்டு.</span></label>
     <div class="info err hide" id="msg"></div>
     <button class="btn" id="pay" type="submit">PAY &amp; REGISTER / பணம் செலுத்தி பதிவு செய்</button>
@@ -115,21 +117,24 @@ var CATS={KIDS:'Kids Indoor Marathon',M5:'5 KM Marathon',M7:'7 KM Marathon',AZ:'
 var $=function(i){return document.getElementById(i)};
 function show(id,on){$(id).classList.toggle('hide',!on)}
 function ev(){return document.querySelector('input[name=event]:checked').value}
+function ageOn(d){if(!/^\d{4}-\d{2}-\d{2}$/.test(d))return NaN;var p=d.split('-'),y=+p[0],m=+p[1],dd=+p[2],a=2026-y-((m>10||(m===10&&dd>25))?1:0);return(y<1900||a<0)?NaN:a}
 function catOf(event,age){
-  if(event==='aanazhagan')return(age>=10&&age<=18)?'AZ':null;
+  if(event==='aanazhagan')return(age>=10&&age<=17)?'AZ':null;
   if(age>=3&&age<=6)return'KIDS';if(age>=7&&age<=15)return'M5';if(age>=16)return'M7';return null;
 }
 function refresh(){
-  var e=ev(),age=parseInt($('age').value,10),g=$('gender');
+  var e=ev(),age=ageOn($('dob').value),g=$('gender');
   if(e==='aanazhagan'){g.value='M';g.disabled=true}else g.disabled=false;
   var c=isNaN(age)?null:catOf(e,age),fee=e==='aanazhagan'?300:200;
-  $('catInfo').textContent=isNaN(age)?'Category / பிரிவு: enter age / வயதை உள்ளிடுங்கள்':(c?'Category / பிரிவு: '+CATS[c]+'  •  Fee / கட்டணம்: ₹'+fee:'Category / பிரிவு: —');
+  $('catInfo').textContent=isNaN(age)?'Age / Category: enter date of birth / பிறந்த தேதியை உள்ளிடுங்கள்':'Age on 25 Oct 2026 / வயது: '+age+(c?'  •  Category / பிரிவு: '+CATS[c]+'  •  Fee / கட்டணம்: ₹'+fee:'');
   var bad=!isNaN(age)&&!c;show('catErr',bad);
-  if(bad)$('catErr').textContent=e==='aanazhagan'?'Aanazhagan is for age 10–18 (male). / ஆனழகன் போட்டி 10–18 வயது ஆண்களுக்கு மட்டும்.':'Marathon is for age 3 and above. / மாரத்தான் 3 வயது மற்றும் மேல்.';
+  if(bad)$('catErr').textContent=e==='aanazhagan'?'Aanazhagan is for age 10–17 (male). / ஆனழகன் போட்டி 10–17 வயது ஆண்களுக்கு மட்டும்.':'Marathon is for age 3 and above. / மாரத்தான் 3 வயது மற்றும் மேல்.';
   return !bad&&c;
 }
 document.querySelectorAll('input[name=event]').forEach(function(r){r.addEventListener('change',refresh)});
-$('age').addEventListener('input',refresh);refresh();
+$('dob').addEventListener('change',refresh);$('dob').addEventListener('input',refresh);
+$('aadhaar').addEventListener('input',function(){this.value=this.value.replace(/\D/g,'').slice(0,4)});
+refresh();
 
 function api(name,body){
   return fetch('/api/'+name,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)})
@@ -219,16 +224,17 @@ function makeCard(e){return ntCard(e)}
 
 $('f').addEventListener('submit',function(x){
   x.preventDefault();msg('');
-  var e=ev(),name=$('name').value.trim(),age=parseInt($('age').value,10),phone=$('phone').value.trim(),city=$('city').value.trim();
+  var e=ev(),name=$('name').value.trim(),dob=$('dob').value,age=ageOn(dob),phone=$('phone').value.trim(),city=$('city').value.trim(),aad=$('aadhaar').value.trim();
   var gender=e==='aanazhagan'?'M':$('gender').value;
   if(name.length<2)return msg('Enter your name. / பெயரை உள்ளிடுங்கள்.');
-  if(isNaN(age))return msg('Enter your age. / வயதை உள்ளிடுங்கள்.');
+  if(isNaN(age))return msg('Enter your date of birth. / பிறந்த தேதியை உள்ளிடுங்கள்.');
   if(!refresh())return msg('Age does not fit this event. / வயது இந்த நிகழ்ச்சிக்குப் பொருந்தவில்லை.');
+  if(aad&&!/^\d{4}$/.test(aad))return msg('Aadhaar: enter exactly the last 4 digits or leave it empty. / ஆதார்: கடைசி 4 இலக்கம் மட்டும் அல்லது காலியாக விடுங்கள்.');
   if(!/^[6-9]\d{9}$/.test(phone))return msg('Enter a valid 10-digit mobile number. / சரியான 10 இலக்க எண்ணை உள்ளிடுங்கள்.');
   if(!$('consent').checked)return msg('Please tick the consent box. / ஒப்புதல் கட்டத்தைத் தேர்வு செய்யுங்கள்.');
   var btn=$('pay');btn.disabled=true;btn.textContent='Please wait… / காத்திருக்கவும்…';
   function reset(){btn.disabled=false;btn.innerHTML='PAY &amp; REGISTER / பணம் செலுத்தி பதிவு செய்'}
-  api('create-order',{event:e,name:name,age:age,gender:gender,phone:phone,city:city}).then(function(o){
+  api('create-order',{event:e,name:name,date_of_birth:dob,aadhaar_last4:aad,gender:gender,phone:phone,city:city}).then(function(o){
     var cf=Cashfree({mode:o.mode});
     return cf.checkout({paymentSessionId:o.payment_session_id,redirectTarget:'_modal'}).then(function(res){
       if(res&&res.error){reset();return msg('Payment not completed'+(res.error.message?': '+res.error.message:'')+'. If money was deducted, do NOT pay again - call '+CONTACT+'. / பணம் செலுத்தல் முடியவில்லை.')}
