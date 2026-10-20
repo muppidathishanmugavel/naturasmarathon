@@ -49,6 +49,7 @@ video{width:100%;max-height:320px;border-radius:12px;background:#000}
       <input id="q" placeholder="Search name / phone / BIB" style="flex:1;min-width:180px">
       <select id="fc"><option value="">All events</option><option value="M7">7 KM</option><option value="M5">5 KM</option><option value="KIDS">Kids Indoor</option><option value="AZ">Bodybuilding</option></select>
       <label><input type="checkbox" id="unp"> include unpaid</label>
+      <label><input type="checkbox" id="newest"> newest first</label>
     </div>
     <div class="row noprint"><button onclick="csv()">⬇ Export CSV</button><button class="o" onclick="badges()">🖨 Print BIB badges (this list)</button></div>
     <div id="regMsg" class="msg e hide"></div>
@@ -104,6 +105,8 @@ function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return
 var CAT={M7:'7 KM',M5:'5 KM',KIDS:'Kids Indoor',AZ:'Bodybuilding'};
 var PRIZE={M7:['₹3,000','₹2,000','₹1,000'],M5:['₹2,000','₹1,000','₹500'],KIDS:['🏆 Memorable Cup','🏆 Memorable Cup','🏆 Memorable Cup']};
 function gl(c,g){return(c==='M7'||c==='AZ')?(g==='F'?'Women':'Men'):(g==='F'?'Girls':'Boys')}
+function fdt(s){if(!s)return'';var d=new Date(s);if(isNaN(d))return'';return d.toLocaleString('en-IN',{timeZone:'Asia/Kolkata',day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit',hour12:true})}
+function regAt(r){return r.paid_at||r.created_at}
 function pad(n){return(n<10?'0':'')+n}
 function fmt(ms,dp){if(ms<0)ms=0;var u=dp===2?10:100,t=Math.floor(ms/u),f=dp===2?100:10,d=t%f,s=Math.floor(t/f)%60,m=Math.floor(t/(60*f))%60,h=Math.floor(t/(3600*f));return(h?h+':':'')+pad(m)+':'+pad(s)+'.'+(dp===2?pad(d):d)}
 function api(action,extra){
@@ -139,7 +142,7 @@ function load(){
   }).catch(function(e){if(T)flash('regMsg',e.message,1)});
 }
 setInterval(function(){if(T&&!document.hidden)load()},7000);
-$('q').oninput=$('fc').onchange=function(){render()};$('unp').onchange=load;
+$('q').oninput=$('fc').onchange=$('newest').onchange=function(){render()};$('unp').onchange=load;
 
 function ranks(){var g={},R={};
   D.rows.filter(function(r){return r.finish_at&&D.race[r.category]}).sort(function(a,b){return new Date(a.finish_at)-new Date(b.finish_at)}).forEach(function(r){var k=r.category+r.gender;g[k]=(g[k]||0)+1;R[r.bib_no]=g[k]});return R}
@@ -153,11 +156,12 @@ function renderReg(){
   $('sum').innerHTML='<span class="chip">Paid: <b>'+paid.length+'</b></span>'+Object.keys(CAT).map(function(c){return'<span class="chip">'+CAT[c]+': <b>'+(cn[c]||0)+'</b></span>'}).join('')+'<span class="chip">Present: <b>'+paid.filter(function(r){return r.attended_at}).length+'</b></span><span class="chip">No Aadhaar: <b>'+paid.filter(function(r){return!r.aadhaar_last4}).length+'</b></span>';
   var q=$('q').value.trim().toLowerCase(),c=$('fc').value;
   VIEW=D.rows.filter(function(r){return(!c||r.category===c)&&(!q||(r.name+' '+r.phone+' '+(r.bib_no||'')+' '+(r.city||'')).toLowerCase().indexOf(q)>-1)});
-  $('regList').innerHTML='<table><tr><th>BIB</th><th>Name</th><th>Event</th><th>Group</th><th>Age</th><th>DOB</th><th>Phone</th><th>City</th><th>Aadhaar</th><th>Status</th><th>Present</th></tr>'+
-  VIEW.map(function(r){return'<tr><td><b>'+(r.bib_no||'-')+'</b></td><td>'+esc(r.name)+'</td><td>'+CAT[r.category]+'</td><td>'+gl(r.category,r.gender)+'</td><td>'+r.age+'</td><td>'+esc(r.date_of_birth||'')+'</td><td>'+esc(r.phone)+'</td><td>'+esc(r.city||'')+'</td><td>'+(r.aadhaar_last4?esc(r.aadhaar_last4):'—')+'</td><td>'+r.payment_status+'</td><td>'+(r.attended_at?'✅':'')+'</td></tr>'}).join('')+'</table>';
+  if($('newest').checked)VIEW.sort(function(a,b){return new Date(regAt(b))-new Date(regAt(a))});
+  $('regList').innerHTML='<table><tr><th>BIB</th><th>Name</th><th>Registered</th><th>Event</th><th>Group</th><th>Age</th><th>DOB</th><th>Phone</th><th>City</th><th>Aadhaar</th><th>Status</th><th>Present</th></tr>'+
+  VIEW.map(function(r){return'<tr><td><b>'+(r.bib_no||'-')+'</b></td><td>'+esc(r.name)+'</td><td>'+fdt(regAt(r))+'</td><td>'+CAT[r.category]+'</td><td>'+gl(r.category,r.gender)+'</td><td>'+r.age+'</td><td>'+esc(r.date_of_birth||'')+'</td><td>'+esc(r.phone)+'</td><td>'+esc(r.city||'')+'</td><td>'+(r.aadhaar_last4?esc(r.aadhaar_last4):'—')+'</td><td>'+r.payment_status+'</td><td>'+(r.attended_at?'✅':'')+'</td></tr>'}).join('')+'</table>';
 }
 function csv(){
-  var rows=[['BIB','Reg No','Name','Age','DOB','Group','Event','Phone','City','Aadhaar last 4','Amount','Status','Paid At','Present','Finish Time']].concat(VIEW.map(function(r){return[r.bib_no||'',r.reg_no||'',r.name,r.age,r.date_of_birth||'',gl(r.category,r.gender),CAT[r.category],r.phone,r.city||'',r.aadhaar_last4||'',r.amount,r.payment_status,r.paid_at||'',r.attended_at?'Yes':'No',(r.finish_at&&D.race[r.category])?fmt(el(r),2):'']}));
+  var rows=[['BIB','Reg No','Name','Registered (IST)','Age','DOB','Group','Event','Phone','City','Aadhaar last 4','Amount','Status','Paid At','Present','Finish Time']].concat(VIEW.map(function(r){return[r.bib_no||'',r.reg_no||'',r.name,fdt(regAt(r)),r.age,r.date_of_birth||'',gl(r.category,r.gender),CAT[r.category],r.phone,r.city||'',r.aadhaar_last4||'',r.amount,r.payment_status,r.paid_at||'',r.attended_at?'Yes':'No',(r.finish_at&&D.race[r.category])?fmt(el(r),2):'']}));
   var s=rows.map(function(a){return a.map(function(x){return'"'+String(x).replace(/"/g,'""')+'"'}).join(',')}).join('\r\n');
   var a=document.createElement('a');a.href=URL.createObjectURL(new Blob(['\ufeff'+s],{type:'text/csv'}));a.download='natura-registrations.csv';a.click();
 }
