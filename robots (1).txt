@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+Disallow: /admin.html
+Disallow: /admin
+Disallow: /api/
+
+Sitemap: https://naturasmarathon.vercel.app/sitemap.xml
