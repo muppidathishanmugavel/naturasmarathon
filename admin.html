@@ -24,7 +24,7 @@ table{width:100%;border-collapse:collapse;font-size:.92rem}th,td{padding:7px 8px
 .chip{display:inline-block;background:#eef7f1;border-radius:999px;padding:4px 10px;margin:2px;font-weight:600;font-size:.9rem}
 h3{color:var(--gd);margin:14px 0 6px}
 video{width:100%;max-height:320px;border-radius:12px;background:#000}
-.bigin{font-size:1.3rem;width:150px}
+.bigin{font-size:1.3rem;width:160px}
 .wal{display:inline-block;background:#25d366;color:#053b1a;font-weight:700;padding:8px 12px;border-radius:10px;text-decoration:none}
 @media print{header,.tabs,.noprint{display:none!important}.card{box-shadow:none}}
 </style></head><body>
@@ -46,11 +46,11 @@ video{width:100%;max-height:320px;border-radius:12px;background:#000}
   <button data-t="rem">🔔 Reminders</button>
 </div>
 
-<!-- SPOT REGISTRATION DESK (For Admin & Organisers simultaneously) -->
+<!-- SPOT REGISTRATION DESK -->
 <section id="t_spot" class="tp">
   <div class="card" style="border-top:4px solid var(--g)">
-    <h3 style="margin-top:0">⚡ Spot Registration & BIB Issue Desk</h3>
-    <p style="margin-bottom:14px;color:#475569;font-size:0.95rem">Enter participant details, assign the physical BIB in your hand (1-999), and instantly send their WhatsApp confirmation.</p>
+    <h3 style="margin-top:0">⚡ Spot Registration &amp; BIB Issue Desk</h3>
+    <p style="margin-bottom:14px;color:#475569;font-size:0.95rem">Enter physical bib number in hand (e.g., <b>89</b> automatically maps to <b>#1089</b> in the system).</p>
     
     <div id="spotErr" class="msg e hide"></div>
 
@@ -66,8 +66,8 @@ video{width:100%;max-height:320px;border-radius:12px;background:#000}
           </select>
         </div>
         <div>
-          <label><b style="color:var(--r)">Physical BIB Number in Hand (1-999) *</b></label>
-          <input type="number" id="spBib" min="1" max="999" required placeholder="e.g. 251" style="font-size:1.15rem;font-weight:bold;border-color:var(--r)">
+          <label><b style="color:var(--r)">Physical BIB in Hand (e.g. 9, 89, 100) *</b></label>
+          <input type="number" id="spBib" min="1" max="999" required placeholder="e.g. 89" style="font-size:1.15rem;font-weight:bold;border-color:var(--r)">
         </div>
       </div>
 
@@ -123,15 +123,15 @@ video{width:100%;max-height:320px;border-radius:12px;background:#000}
         <label style="cursor:pointer"><input type="checkbox" id="spAttend" checked> <b>Mark Present Immediately</b> (BIB handed over at desk)</label>
       </div>
 
-      <button type="submit" id="spSubmitBtn" style="width:100%;padding:12px;font-size:1.05rem">⚡ Register & Assign BIB</button>
+      <button type="submit" id="spSubmitBtn" style="width:100%;padding:12px;font-size:1.05rem">⚡ Register &amp; Assign BIB</button>
     </form>
 
     <div id="spotSuccess" class="hide" style="margin-top:16px;padding:16px;background:#ecfdf5;border:2px solid #a7f3d0;border-radius:10px">
       <h3 style="color:#065f46;margin-top:0">✅ Successfully Registered!</h3>
-      <p style="font-size:1.05rem;margin:4px 0">Assigned BIB: <b id="succBib" style="color:var(--r);font-size:1.6rem"></b> &nbsp; | &nbsp; <span id="succName"></span> (<span id="succCat"></span>)</p>
+      <p style="font-size:1.05rem;margin:4px 0">Assigned Physical BIB: <b id="succBib" style="color:var(--r);font-size:1.6rem"></b> &nbsp; | &nbsp; <span id="succName"></span> (<span id="succCat"></span>)</p>
       <p style="margin:6px 0;color:#065f46">Payment: <b id="succPay"></b></p>
       <div class="row" style="margin-top:12px">
-        <a id="succWaBtn" class="wal" target="_blank" rel="noopener" style="font-size:1.05rem;padding:10px 18px">📲 Open & Send WhatsApp Confirmation</a>
+        <a id="succWaBtn" class="wal" target="_blank" rel="noopener" style="font-size:1.05rem;padding:10px 18px">📲 Open &amp; Send WhatsApp Confirmation</a>
         <button class="o" id="succPrintBtn">🖨 Print Badge</button>
       </div>
     </div>
@@ -146,7 +146,7 @@ video{width:100%;max-height:320px;border-radius:12px;background:#000}
 <section id="t_reg" class="tp hide">
   <div class="card"><div id="sum" class="row"></div>
     <div class="row noprint">
-      <input id="q" placeholder="Search name / phone / BIB" style="flex:1;min-width:180px">
+      <input id="q" placeholder="Search name / phone / BIB (e.g. 89 or 1089)" style="flex:1;min-width:180px">
       <select id="fc"><option value="">All events</option><option value="M7">7 KM</option><option value="M5">5 KM</option><option value="KIDS">Kids Indoor</option><option value="AZ">Bodybuilding</option></select>
       <label><input type="checkbox" id="unp"> include unpaid</label>
       <label><input type="checkbox" id="newest"> newest first</label>
@@ -160,7 +160,8 @@ video{width:100%;max-height:320px;border-radius:12px;background:#000}
 <section id="t_att" class="tp hide">
   <div class="card">
     <h3 style="margin-top:0">Mark attendance</h3>
-    <div class="row"><input id="ab" class="bigin" inputmode="numeric" placeholder="BIB no"><button onclick="markBox()">Mark present</button><button class="o" onclick="toggleScan('scanA',markCode)">📷 Scan QR</button></div>
+    <p style="color:#64748b;margin-bottom:8px">Type printed number (e.g. <b>10</b> or <b>1010</b>) &amp; press Enter:</p>
+    <div class="row"><input id="ab" class="bigin" inputmode="numeric" placeholder="BIB (e.g. 10)"><button onclick="markBox()">Mark present</button><button class="o" onclick="toggleScan('scanA',markCode)">📷 Scan QR</button></div>
     <div id="scanA" class="hide"></div>
     <div id="attMsg" class="msg hide"></div>
     <div id="attList"></div>
@@ -171,7 +172,8 @@ video{width:100%;max-height:320px;border-radius:12px;background:#000}
   <div class="grid" id="swBox"></div>
   <div class="card">
     <h3 style="margin-top:0">Runner crossed the finish line</h3>
-    <div class="row"><input id="fb" class="bigin" inputmode="numeric" placeholder="BIB no"><button onclick="finBox()">🏁 FINISH</button><button class="o" onclick="toggleScan('scanR',finCode)">📷 Scan QR</button></div>
+    <p style="color:#64748b;margin-bottom:8px">Enter printed bib (e.g. <b>9</b> for 1009, <b>89</b> for 1089, <b>100</b> for 1100):</p>
+    <div class="row"><input id="fb" class="bigin" inputmode="numeric" placeholder="BIB (e.g. 9)"><button onclick="finBox()">🏁 FINISH</button><button class="o" onclick="toggleScan('scanR',finCode)">📷 Scan QR</button></div>
     <div id="scanR" class="hide"></div>
     <div id="finMsg" class="msg hide"></div>
     <div class="sc" id="finList"></div>
@@ -210,10 +212,22 @@ function fdt(s){if(!s)return'';var d=new Date(s);if(isNaN(d))return'';return d.t
 function regAt(r){return r.paid_at||r.created_at}
 function pad(n){return(n<10?'0':'')+n}
 function fmt(ms,dp){if(ms<0)ms=0;var u=dp===2?10:100,t=Math.floor(ms/u),f=dp===2?100:10,d=t%f,s=Math.floor(t/f)%60,m=Math.floor(t/(60*f))%60,h=Math.floor(t/(3600*f));return(h?h+':':'')+pad(m)+':'+pad(s)+'.'+(dp===2?pad(d):d)}
+
+// Smart Bib Resolution: 9 -> 1009, 89 -> 1089, 100 -> 1100, 1010 -> 1010
+function normBib(v){
+  var n=parseInt(v,10);
+  if(!n||isNaN(n)||n<=0)return null;
+  return n<1000?1000+n:n;
+}
+function dispBib(n){
+  if(!n)return'-';
+  var num=parseInt(n,10);
+  return num>=1000?'#'+(num-1000)+' <small style="color:#64748b">(#'+num+')</small>':'#'+num;
+}
+
 function payInfo(r){
   if(r.razorpay_payment_id&&r.razorpay_payment_id.startsWith('SPOT_')){
-    var p=r.razorpay_payment_id.replace(/^SPOT_/,'').replace(/_/g,' ');
-    return p;
+    return r.razorpay_payment_id.replace(/^SPOT_/,'').replace(/_/g,' ');
   }
   return r.razorpay_payment_id?'Online ('+r.razorpay_payment_id+')':'Online Gateway';
 }
@@ -231,7 +245,6 @@ function logout(){T=null;try{sessionStorage.removeItem('t')}catch(e){}stopScan()
 function enter(){
   $('login').classList.add('hide');$('app').classList.remove('hide');
   var adm=ROLE==='admin';$('roleName').textContent=adm?'Admin':'Organiser';
-  // Allow Spot Registration for BOTH Admin & Organiser
   document.querySelectorAll('.tabs button').forEach(function(b){
     var t=b.getAttribute('data-t');
     b.classList.toggle('hide',!adm&&(t==='reg'||t==='rem'));
@@ -274,18 +287,18 @@ function onPayModeChange(){
   else onCatChange();
 }
 
-function spotWaText(r,payStr){
+function spotWaText(r,physBib,payStr){
   var catName=CAT[r.category]||r.category;
   return "🎉 *Natura's Trust - Spot Registration Confirmed!*\n"+
     "--------------------------------\n"+
     "வணக்கம் *"+r.name+"*,\n"+
     "உங்கள் பதிவு வெற்றிகரமாக முடிந்தது.\n\n"+
-    "🎽 *BIB Number:* *"+r.bib_no+"*\n"+
+    "🎽 *BIB Number:* *#"+physBib+"* (System #"+r.bib_no+")\n"+
     "🏃 *Event:* "+catName+" ("+gl(r.category,r.gender)+")\n"+
     "💳 *Payment:* Confirmed ("+payStr+")\n"+
     "📅 *Date:* 25 Oct 2026\n"+
     "📍 *Venue:* Mukkudal\n\n"+
-    "தயவுசெய்து உங்கள் மார்பில் BIB எண்ணை அணிந்துகொள்ளவும்.\n"+
+    "தயவுசெய்து உங்கள் மார்பில் BIB #"+physBib+" அணியவும்.\n"+
     "All the best for your event!\n"+
     "Natura's Trust: "+location.origin;
 }
@@ -297,9 +310,10 @@ function submitSpot(e){
   $('spotErr').className='msg e hide';
   $('spotSuccess').classList.add('hide');
 
+  var rawBib=parseInt($('spBib').value,10);
   var payload={
     category:$('spCat').value,
-    bib_no:parseInt($('spBib').value,10),
+    bib_no:rawBib,
     name:$('spName').value.trim(),
     phone:$('spPhone').value.trim(),
     age:parseInt($('spAge').value,10),
@@ -314,23 +328,22 @@ function submitSpot(e){
   api('spot-reg',payload).then(function(j){
     lastSpotEntry=j.entry;
     var paySummary=payload.payment_mode+(payload.amount>0?' - ₹'+payload.amount:'')+(payload.payment_ref?' ('+payload.payment_ref+')':'');
-    
-    // Fill Success Box
-    $('succBib').textContent='#'+payload.bib_no;
+    var finalSysBib=j.entry.bib_no;
+    var displayBib=finalSysBib>=1000?(finalSysBib-1000):finalSysBib;
+
+    $('succBib').textContent='#'+displayBib+' (System #'+finalSysBib+')';
     $('succName').textContent=payload.name;
     $('succCat').textContent=CAT[payload.category]+' • '+gl(payload.category,payload.gender);
     $('succPay').textContent=paySummary;
 
-    // Build WhatsApp Link
-    var waLink='https://wa.me/91'+payload.phone+'?text='+encodeURIComponent(spotWaText(payload,paySummary));
+    var waLink='https://wa.me/91'+payload.phone+'?text='+encodeURIComponent(spotWaText(j.entry,displayBib,paySummary));
     $('succWaBtn').href=waLink;
     $('succPrintBtn').onclick=function(){printSingleBadge(j.entry)};
 
     $('spotSuccess').classList.remove('hide');
-    window.open(waLink,'_blank'); // Direct trigger WhatsApp
+    window.open(waLink,'_blank');
 
-    // Advance to next bib and clear participant details
-    var nextBib=payload.bib_no+1;
+    var nextBib=rawBib+1;
     $('spBib').value=nextBib<=999?nextBib:'';
     $('spName').value='';
     $('spPhone').value='';
@@ -350,18 +363,19 @@ function submitSpot(e){
 
 function renderRecentSpot(){
   var spots=D.rows.filter(function(r){return r.reg_no&&r.reg_no.indexOf('SPOT')>-1}).sort(function(a,b){return new Date(regAt(b))-new Date(regAt(a))});
-  $('recentSpotList').innerHTML=spots.length?'<table><tr><th>BIB</th><th>Name</th><th>Event</th><th>Phone</th><th>City</th><th>Payment</th><th>Present</th></tr>'+
+  $('recentSpotList').innerHTML=spots.length?'<table><tr><th>Physical BIB</th><th>Name</th><th>Event</th><th>Phone</th><th>City</th><th>Payment</th><th>Present</th></tr>'+
   spots.slice(0,25).map(function(r){
-    return'<tr><td><b>#'+r.bib_no+'</b></td><td>'+esc(r.name)+'</td><td>'+CAT[r.category]+' • '+gl(r.category,r.gender)+'</td><td>'+esc(r.phone)+'</td><td>'+esc(r.city||'—')+'</td><td>'+payInfo(r)+'</td><td>'+(r.attended_at?'✅':'—')+'</td></tr>'
+    return'<tr><td><b>'+dispBib(r.bib_no)+'</b></td><td>'+esc(r.name)+'</td><td>'+CAT[r.category]+' • '+gl(r.category,r.gender)+'</td><td>'+esc(r.phone)+'</td><td>'+esc(r.city||'—')+'</td><td>'+payInfo(r)+'</td><td>'+(r.attended_at?'✅':'—')+'</td></tr>'
   }).join('')+'</table>':'<p style="color:#64748b;margin:6px 0">No spot registrations entered yet.</p>';
 }
 
 function printSingleBadge(r){
+  var dispB=r.bib_no>=1000?(r.bib_no-1000):r.bib_no;
   var d=document.createElement('div');new QRCode(d,{text:'NT:'+r.bib_no,width:150,height:150});
   var cv=d.querySelector('canvas');
-  var item='<div class="b"><div class="h">NATURA\'S TRUST MARATHON 2026</div><div class="n">'+r.bib_no+'</div><div class="nm">'+esc(r.name)+'</div><div class="m">'+CAT[r.category]+' • '+gl(r.category,r.gender)+'</div><img src="'+(cv?cv.toDataURL():'')+'"><div class="m">'+esc(r.reg_no)+'</div></div>';
+  var item='<div class="b"><div class="h">NATURA\'S TRUST MARATHON 2026</div><div class="n">'+dispB+'</div><div class="nm">'+esc(r.name)+'</div><div class="m">'+CAT[r.category]+' • '+gl(r.category,r.gender)+'</div><img src="'+(cv?cv.toDataURL():'')+'"><div class="m">'+esc(r.reg_no)+'</div></div>';
   var w=window.open('','_blank');
-  w.document.write('<html><head><title>BIB badge</title><style>body{font-family:Arial,sans-serif;margin:8mm}.b{border:2px solid #0e7a3d;border-radius:8px;text-align:center;padding:12px;width:320px;margin:auto}.h{background:#0e7a3d;color:#fff;font-weight:bold;padding:6px;font-size:12px}.n{font-size:64px;font-weight:900;line-height:1.1}.nm{font-size:18px;font-weight:bold}.m{font-size:13px;color:#333}</style></head><body>'+item+'</body></html>');
+  w.document.write('<html><head><title>BIB badge</title><style>body{font-family:Arial,sans-serif;margin:8mm}.b{border:2px solid #0e7a3d;border-radius:8px;text-align:center;padding:12px;width:320px;margin:auto}.h{background:#0e7a3d;color:#fff;font-weight:bold;padding:6px;font-size:12px}.n{font-size:72px;font-weight:900;line-height:1.1}.nm{font-size:18px;font-weight:bold}.m{font-size:13px;color:#333}</style></head><body>'+item+'</body></html>');
   w.document.close();setTimeout(function(){w.print()},500);
 }
 
@@ -381,23 +395,31 @@ function renderReg(){
   var paid=D.rows.filter(function(r){return r.payment_status==='paid'}),cn={};
   paid.forEach(function(r){cn[r.category]=(cn[r.category]||0)+1});
   $('sum').innerHTML='<span class="chip">Paid: <b>'+paid.length+'</b></span>'+Object.keys(CAT).map(function(c){return'<span class="chip">'+CAT[c]+': <b>'+(cn[c]||0)+'</b></span>'}).join('')+'<span class="chip">Present: <b>'+paid.filter(function(r){return r.attended_at}).length+'</b></span>';
+  
   var q=$('q').value.trim().toLowerCase(),c=$('fc').value;
-  VIEW=D.rows.filter(function(r){return(!c||r.category===c)&&(!q||(r.name+' '+r.phone+' '+(r.bib_no||'')+' '+(r.city||'')).toLowerCase().indexOf(q)>-1)});
+  VIEW=D.rows.filter(function(r){
+    var bStr=String(r.bib_no||'');
+    var shortB=r.bib_no>=1000?String(r.bib_no-1000):'';
+    var matchBib=(bStr===q||shortB===q||bStr.indexOf(q)>-1||shortB.indexOf(q)>-1);
+    var matchText=(r.name+' '+r.phone+' '+(r.city||'')).toLowerCase().indexOf(q)>-1;
+    return(!c||r.category===c)&&(!q||matchBib||matchText);
+  });
   if($('newest').checked)VIEW.sort(function(a,b){return new Date(regAt(b))-new Date(regAt(a))});
-  $('regList').innerHTML='<table><tr><th>BIB</th><th>Name</th><th>Registered</th><th>Event</th><th>Group</th><th>Age</th><th>Phone</th><th>City</th><th>Payment</th><th>Status</th><th>Present</th></tr>'+
-  VIEW.map(function(r){return'<tr><td><b>'+(r.bib_no||'-')+'</b></td><td>'+esc(r.name)+'</td><td>'+fdt(regAt(r))+'</td><td>'+CAT[r.category]+'</td><td>'+gl(r.category,r.gender)+'</td><td>'+r.age+'</td><td>'+esc(r.phone)+'</td><td>'+esc(r.city||'')+'</td><td>'+payInfo(r)+'</td><td>'+r.payment_status+'</td><td>'+(r.attended_at?'✅':'')+'</td></tr>'}).join('')+'</table>';
+
+  $('regList').innerHTML='<table><tr><th>BIB (Cloth / Sys)</th><th>Name</th><th>Registered</th><th>Event</th><th>Group</th><th>Age</th><th>Phone</th><th>City</th><th>Payment</th><th>Status</th><th>Present</th></tr>'+
+  VIEW.map(function(r){return'<tr><td><b>'+dispBib(r.bib_no)+'</b></td><td>'+esc(r.name)+'</td><td>'+fdt(regAt(r))+'</td><td>'+CAT[r.category]+'</td><td>'+gl(r.category,r.gender)+'</td><td>'+r.age+'</td><td>'+esc(r.phone)+'</td><td>'+esc(r.city||'')+'</td><td>'+payInfo(r)+'</td><td>'+r.payment_status+'</td><td>'+(r.attended_at?'✅':'')+'</td></tr>'}).join('')+'</table>';
 }
 
 function csv(){
-  var rows=[['BIB','Reg No','Name','Registered (IST)','Age','Group','Event','Phone','City','Payment Mode','Amount','Status','Paid At','Present','Finish Time']].concat(VIEW.map(function(r){return[r.bib_no||'',r.reg_no||'',r.name,fdt(regAt(r)),r.age,gl(r.category,r.gender),CAT[r.category],r.phone,r.city||'',payInfo(r),r.amount,r.payment_status,r.paid_at||'',r.attended_at?'Yes':'No',(r.finish_at&&D.race[r.category])?fmt(el(r),2):'']}));
+  var rows=[['Physical BIB','System BIB','Reg No','Name','Registered (IST)','Age','Group','Event','Phone','City','Payment Mode','Amount','Status','Paid At','Present','Finish Time']].concat(VIEW.map(function(r){return[(r.bib_no>=1000?(r.bib_no-1000):r.bib_no)||'',r.bib_no||'',r.reg_no||'',r.name,fdt(regAt(r)),r.age,gl(r.category,r.gender),CAT[r.category],r.phone,r.city||'',payInfo(r),r.amount,r.payment_status,r.paid_at||'',r.attended_at?'Yes':'No',(r.finish_at&&D.race[r.category])?fmt(el(r),2):'']}));
   var s=rows.map(function(a){return a.map(function(x){return'"'+String(x).replace(/"/g,'""')+'"'}).join(',')}).join('\r\n');
   var a=document.createElement('a');a.href=URL.createObjectURL(new Blob(['\ufeff'+s],{type:'text/csv'}));a.download='natura-registrations.csv';a.click();
 }
 
 function badges(){
   var L=VIEW.filter(function(r){return r.bib_no});if(!L.length)return alert('No paid entries in this list');
-  var items=L.map(function(r){var d=document.createElement('div');new QRCode(d,{text:'NT:'+r.bib_no,width:150,height:150});var cv=d.querySelector('canvas');
-    return'<div class="b"><div class="h">NATURA\'S TRUST MARATHON 2026</div><div class="n">'+r.bib_no+'</div><div class="nm">'+esc(r.name)+'</div><div class="m">'+CAT[r.category]+' • '+gl(r.category,r.gender)+'</div><img src="'+(cv?cv.toDataURL():'')+'"><div class="m">'+esc(r.reg_no)+'</div></div>'}).join('');
+  var items=L.map(function(r){var dispB=r.bib_no>=1000?(r.bib_no-1000):r.bib_no;var d=document.createElement('div');new QRCode(d,{text:'NT:'+r.bib_no,width:150,height:150});var cv=d.querySelector('canvas');
+    return'<div class="b"><div class="h">NATURA\'S TRUST MARATHON 2026</div><div class="n">'+dispB+'</div><div class="nm">'+esc(r.name)+'</div><div class="m">'+CAT[r.category]+' • '+gl(r.category,r.gender)+'</div><img src="'+(cv?cv.toDataURL():'')+'"><div class="m">'+esc(r.reg_no)+'</div></div>'}).join('');
   var w=window.open('','_blank');
   w.document.write('<html><head><title>BIB badges</title><style>body{font-family:Arial,sans-serif;margin:8mm}.g{display:grid;grid-template-columns:1fr 1fr;gap:6mm}.b{border:2px solid #0e7a3d;border-radius:8px;text-align:center;padding:0 0 6px;page-break-inside:avoid}.h{background:#0e7a3d;color:#fff;font-weight:bold;padding:6px;font-size:12px}.n{font-size:64px;font-weight:900;line-height:1.1}.nm{font-size:18px;font-weight:bold}.m{font-size:13px;color:#333}</style></head><body><div class="g">'+items+'</div></body></html>');
   w.document.close();setTimeout(function(){w.print()},600);
@@ -419,18 +441,28 @@ function toggleScan(boxId,cb){
   }).catch(function(){box.textContent='Camera not available. Type the BIB number instead.'});
 }
 function bibOf(t){var m=/NT:(\d+)/.exec(t);return m?m[1]:(/^\d+$/.test(String(t).trim())?String(t).trim():null)}
-function who(e){return'#'+e.bib_no+' '+e.name+' ('+CAT[e.category]+' • '+gl(e.category,e.gender)+')'}
+function who(e){
+  var dispB=e.bib_no>=1000?(e.bib_no-1000):e.bib_no;
+  return '#'+dispB+' ('+e.name+' • '+CAT[e.category]+' • '+gl(e.category,e.gender)+')';
+}
 
 /* ATTENDANCE */
-function mark(bib){return api('attend',{bib:bib}).then(function(j){flash('attMsg',(j.already?'ℹ️ Already marked: ':'✅ Present: ')+who(j.entry));return load()}).catch(function(e){flash('attMsg','❌ '+e.message,1)})}
+function mark(bib){
+  var finalBib=normBib(bib);
+  return api('attend',{bib:finalBib}).then(function(j){flash('attMsg',(j.already?'ℹ️ Already marked: ':'✅ Present: ')+who(j.entry));return load()}).catch(function(e){flash('attMsg','❌ '+e.message,1)})}
 function markCode(t){var b=bibOf(t);if(b)mark(b);else flash('attMsg','❌ Not a valid code',1)}
-function markBox(){var b=bibOf($('ab').value);if(b)mark(b).then(function(){$('ab').value='';$('ab').focus()});else flash('attMsg','❌ Enter a BIB number',1)}
+function markBox(){
+  var raw=$('ab').value.trim();
+  if(!raw)return flash('attMsg','❌ Enter a BIB number',1);
+  mark(raw).then(function(){$('ab').value='';$('ab').focus()});
+}
 $('ab').addEventListener('keydown',function(e){if(e.key==='Enter')markBox()});
+
 function renderAtt(){
   var paid=D.rows.filter(function(r){return r.payment_status==='paid'}),here=paid.filter(function(r){return r.attended_at}).sort(function(a,b){return new Date(b.attended_at)-new Date(a.attended_at)}),no=paid.filter(function(r){return!r.attended_at});
   $('attList').innerHTML='<p><b>Present: '+here.length+'</b> &nbsp; Not yet arrived: <b>'+no.length+'</b></p><h3>Latest arrivals</h3>'+
-  here.slice(0,12).map(function(r){return'<span class="chip">#'+r.bib_no+' '+esc(r.name)+' <a href="#" onclick="unmark('+r.bib_no+');return false">✖</a></span>'}).join('')+
-  '<details style="margin-top:10px"><summary>Not yet arrived ('+no.length+')</summary>'+no.map(function(r){return'<span class="chip">#'+r.bib_no+' '+esc(r.name)+'</span>'}).join('')+'</details>';
+  here.slice(0,14).map(function(r){return'<span class="chip">'+dispBib(r.bib_no)+' '+esc(r.name)+' <a href="#" onclick="unmark('+r.bib_no+');return false">✖</a></span>'}).join('')+
+  '<details style="margin-top:10px"><summary>Not yet arrived ('+no.length+')</summary>'+no.map(function(r){return'<span class="chip">'+dispBib(r.bib_no)+' '+esc(r.name)+'</span>'}).join('')+'</details>';
 }
 function unmark(b){api('unattend',{bib:b}).then(load)}
 
@@ -439,11 +471,25 @@ function startRace(c){api('race-start',{category:c}).then(load).catch(function(e
 function stopRace(c){if(confirm('Stop the '+CAT[c]+' clock? Finish entries will be blocked until you resume.'))api('race-stop',{category:c}).then(load).catch(function(e){alert(e.message)})}
 function resumeRace(c){api('race-resume',{category:c}).then(load).catch(function(e){alert(e.message)})}
 function resetRace(c){if(confirm('Reset '+CAT[c]+'? The stopwatch AND all its finish times will be cleared.'))api('race-reset',{category:c}).then(load)}
-function finish(bib){return api('finish',{bib:bib}).then(function(j){return load().then(function(){var R=ranks();flash('finMsg',(j.already?'ℹ️ Already finished: ':'🏁 ')+who(j.entry)+' — Position '+R[j.entry.bib_no]+' — '+fmt(j.elapsed,2))})}).catch(function(e){flash('finMsg','❌ '+e.message,1)})}
+
+function finish(bib){
+  var finalBib=normBib(bib);
+  return api('finish',{bib:finalBib}).then(function(j){
+    return load().then(function(){
+      var R=ranks();
+      flash('finMsg',(j.already?'ℹ️ Already finished: ':'🏁 ')+who(j.entry)+' — Position '+R[j.entry.bib_no]+' — '+fmt(j.elapsed,2));
+    });
+  }).catch(function(e){flash('finMsg','❌ '+e.message,1)})}
+
 function finCode(t){var b=bibOf(t);if(b)finish(b)}
-function finBox(){var b=bibOf($('fb').value);if(!b)return flash('finMsg','❌ Enter a BIB number',1);finish(b).then(function(){$('fb').value='';$('fb').focus()})}
+function finBox(){
+  var raw=$('fb').value.trim();
+  if(!raw)return flash('finMsg','❌ Enter a BIB number',1);
+  finish(raw).then(function(){$('fb').value='';$('fb').focus()});
+}
 $('fb').addEventListener('keydown',function(e){if(e.key==='Enter')finBox()});
 function undo(b){if(confirm('Remove finish time of BIB '+b+'?'))api('unfinish',{bib:b}).then(load)}
+
 function renderRace(){
   $('swBox').innerHTML=['M7','M5','KIDS'].map(function(c){
     var on=!!D.race[c],st=!!D.stop[c],adm=ROLE==='admin';
@@ -451,7 +497,7 @@ function renderRace(){
     var btn=adm?((!on?'<button class="o" onclick="startRace(\''+c+'\')">▶ START</button>':(st?'<button class="o" onclick="resumeRace(\''+c+'\')">▶ Resume</button>':'<button class="r" onclick="stopRace(\''+c+'\')">⏹ STOP</button>'))+'<button class="s" onclick="resetRace(\''+c+'\')">Reset</button>'):'';
     return'<div class="card"><b>'+CAT[c]+'</b><div class="sw" id="sw_'+c+'">00:00.0</div><div class="row">'+chip+btn+'</div></div>'}).join('');
   var R=ranks(),F=D.rows.filter(function(r){return r.finish_at&&D.race[r.category]}).sort(function(a,b){return new Date(b.finish_at)-new Date(a.finish_at)});
-  $('finList').innerHTML=F.length?'<table><tr><th>Pos</th><th>BIB</th><th>Name</th><th>Event</th><th>Time</th><th></th></tr>'+F.map(function(r){return'<tr><td><b>'+R[r.bib_no]+'</b></td><td>'+r.bib_no+'</td><td>'+esc(r.name)+'</td><td>'+CAT[r.category]+' • '+gl(r.category,r.gender)+'</td><td>'+fmt(el(r),2)+'</td><td><button class="s" onclick="undo('+r.bib_no+')">Undo</button></td></tr>'}).join('')+'</table>':'<p>No finishers yet.</p>';
+  $('finList').innerHTML=F.length?'<table><tr><th>Pos</th><th>BIB</th><th>Name</th><th>Event</th><th>Time</th><th></th></tr>'+F.map(function(r){return'<tr><td><b>'+R[r.bib_no]+'</b></td><td>'+dispBib(r.bib_no)+'</td><td>'+esc(r.name)+'</td><td>'+CAT[r.category]+' • '+gl(r.category,r.gender)+'</td><td>'+fmt(el(r),2)+'</td><td><button class="s" onclick="undo('+r.bib_no+')">Undo</button></td></tr>'}).join('')+'</table>':'<p>No finishers yet.</p>';
 }
 setInterval(function(){['M7','M5','KIDS'].forEach(function(c){var e=$('sw_'+c);if(e)e.textContent=D.race[c]?fmt((D.stop[c]||(Date.now()+off))-D.race[c]):'00:00.0'})},100);
 
@@ -459,10 +505,11 @@ setInterval(function(){['M7','M5','KIDS'].forEach(function(c){var e=$('sw_'+c);i
 var REM=[{t:'D10',n:10,day:15},{t:'D5',n:5,day:20},{t:'D2',n:2,day:23},{t:'D1',n:1,day:24}],remSel='D10';
 var COMM='https://chat.whatsapp.com/BLizhCOK5KiBVf1GQwIWob';
 function remText(r,n,name){
+  var dispB=r.bib_no>=1000?(r.bib_no-1000):r.bib_no;
   var en=r.category==='AZ'?'Bodybuilding: 25 Oct 2026, 8:00 AM, Mukkudal Thamirabarani Riverbank':r.category==='KIDS'?'Kids Indoor Marathon: 25 Oct 2026, Mukkudal (timing will be shared in our WhatsApp Community)':CAT[r.category]+' Marathon: 25 Oct 2026, 6:00 AM, Start: Kaliyankulam Bus Stand';
   var ta=r.category==='AZ'?'உடற்கட்டமைப்பு: 25 அக்டோபர் 2026, காலை 8:00, முக்கூடல் தாமிரபரணி நதிக்கரை':r.category==='KIDS'?'சிறுவர் உள்ளரங்க மாரத்தான்: 25 அக்டோபர் 2026, முக்கூடல் (நேர விவரம் வாட்ஸ்அப் சமூகத்தில் அறிவிக்கப்படும்)':CAT[r.category]+' மாரத்தான்: 25 அக்டோபர் 2026, காலை 6:00, தொடக்கம்: கலியன்குளம் பேருந்து நிலையம்';
   var left=n===1?'tomorrow':'in '+n+' days',leftT=n===1?'நாளை':n+' நாட்களில்';
-  var bib=r.bib_no?'\nBIB: '+r.bib_no:'';
+  var bib=r.bib_no?'\nBIB: '+dispB+' (System #'+r.bib_no+')':'';
   return 'Hello '+name+'! Reminder from Natura\'s Trust: our event is '+left+'.\n'+en+bib+'\nGet your entry card again anytime: '+location.origin+'\nUpdates: '+COMM+
     '\n\nவணக்கம் '+name+'! Natura\'s Trust நினைவூட்டல்: நிகழ்ச்சி '+leftT+'.\n'+ta+bib+'\nநுழைவு அட்டையை மீண்டும் பெற: '+location.origin;
 }
@@ -477,7 +524,7 @@ function renderRem(){
   $('remInfo').className='msg';$('remInfo').textContent='Sent: '+done+' of '+paid.length+'  •  Tap "📲 WhatsApp", press Send in WhatsApp, then come back for the next one.';
   $('remList').innerHTML='<table><tr><th>BIB</th><th>Name</th><th>Phone</th><th>Status</th><th>Send</th></tr>'+paid.map(function(r){
     var link='https://wa.me/91'+r.phone+'?text='+encodeURIComponent(remText(r,cur.n,r.name));
-    return'<tr><td><b>'+r.bib_no+'</b></td><td>'+esc(r.name)+'</td><td>'+esc(r.phone)+'</td><td>'+(sent(r)?'✅ Sent':'⏳ Pending')+'</td><td><a class="wal" target="_blank" rel="noopener" href="'+link+'" onclick="markRem('+r.bib_no+')">📲 '+(sent(r)?'Send again':'WhatsApp')+'</a></td></tr>'}).join('')+'</table>';
+    return'<tr><td><b>'+dispBib(r.bib_no)+'</b></td><td>'+esc(r.name)+'</td><td>'+esc(r.phone)+'</td><td>'+(sent(r)?'✅ Sent':'⏳ Pending')+'</td><td><a class="wal" target="_blank" rel="noopener" href="'+link+'" onclick="markRem('+r.bib_no+')">📲 '+(sent(r)?'Send again':'WhatsApp')+'</a></td></tr>'}).join('')+'</table>';
 }
 function markRem(bib){api('remind-mark',{bib:bib,tag:remSel}).then(load).catch(function(e){alert(e.message)})}
 function clip(t,msg){if(navigator.clipboard&&window.isSecureContext)navigator.clipboard.writeText(t).then(function(){alert(msg)},function(){prompt('Copy:',t)});else prompt('Copy:',t)}
@@ -489,7 +536,7 @@ function renderWin(){
   var h='';[['M7','M'],['M7','F'],['M5','M'],['M5','F'],['KIDS','M'],['KIDS','F']].forEach(function(p){
     var L=D.rows.filter(function(r){return r.category===p[0]&&r.gender===p[1]&&r.finish_at&&D.race[p[0]]}).sort(function(a,b){return new Date(a.finish_at)-new Date(b.finish_at)});
     h+='<h3>'+CAT[p[0]]+' – '+gl(p[0],p[1])+'</h3>';
-    h+=L.length?'<div class="sc"><table><tr><th>Pos</th><th>BIB</th><th>Name</th><th>Time</th><th>Prize</th></tr>'+L.map(function(r,i){return'<tr'+(i<3?' style="background:#fff7e0;font-weight:700"':'')+'><td>'+['🥇','🥈','🥉'][i]+(i<3?'':(i+1))+'</td><td>'+r.bib_no+'</td><td>'+esc(r.name)+'</td><td>'+fmt(el(r),2)+'</td><td>'+(i<3?PRIZE[p[0]][i]:'')+'</td></tr>'}).join('')+'</table></div>':'<p style="color:#557">No finishers yet.</p>';
+    h+=L.length?'<div class="sc"><table><tr><th>Pos</th><th>BIB</th><th>Name</th><th>Time</th><th>Prize</th></tr>'+L.map(function(r,i){return'<tr'+(i<3?' style="background:#fff7e0;font-weight:700"':'')+'><td>'+['🥇','🥈','🥉'][i]+(i<3?'':(i+1))+'</td><td>'+dispBib(r.bib_no)+'</td><td>'+esc(r.name)+'</td><td>'+fmt(el(r),2)+'</td><td>'+(i<3?PRIZE[p[0]][i]:'')+'</td></tr>'}).join('')+'</table></div>':'<p style="color:#557">No finishers yet.</p>';
   });
   $('winBox').innerHTML=h;
 }
