@@ -13,6 +13,13 @@ const COLS = 'bib_no,reg_no,name,age,date_of_birth,aadhaar_last4,gender,category
 const ORG_COLS = 'bib_no,reg_no,name,age,gender,category,payment_status,attended_at,finish_at,razorpay_payment_id';
 const ADMIN_ONLY = ['race-start', 'race-stop', 'race-resume', 'race-reset', 'remind-mark'];
 
+// Smart Bib Normalizer: 9 -> 1009, 89 -> 1089, 100 -> 1100, 1010 -> 1010
+function normBib(val) {
+  const n = parseInt(val, 10);
+  if (!n || isNaN(n) || n <= 0) return null;
+  return n < 1000 ? 1000 + n : n;
+}
+
 function makeToken(role) {
   const p = Buffer.from(JSON.stringify({ exp: Date.now() + 14 * 3600 * 1000, role })).toString('base64url');
   return p + '.' + sign(p);
@@ -65,10 +72,11 @@ module.exports = async (req, res) => {
       return res.status(200).json({ rows, race, now: new Date().toISOString(), role: user.role });
     }
 
-    // Spot Registration Handler (Used simultaneously by Admin or Organisers at desks)
+    // Spot Registration Handler
     if (a === 'spot-reg') {
-      const bib = parseInt(b.bib_no, 10);
-      if (!bib || bib < 1 || bib > 999) return res.status(400).json({ error: 'Enter a valid BIB number between 1 and 999' });
+      const rawBib = parseInt(b.bib_no, 10);
+      const bib = normBib(rawBib);
+      if (!bib) return res.status(400).json({ error: 'Enter a valid BIB number' });
 
       const name = String(b.name || '').trim();
       const phone = String(b.phone || '').trim().replace(/\D/g, '').slice(-10);
@@ -77,10 +85,10 @@ module.exports = async (req, res) => {
       if (!phone || phone.length !== 10) return res.status(400).json({ error: 'Enter a valid 10-digit mobile number' });
       if (!['M7', 'M5', 'KIDS', 'AZ'].includes(category)) return res.status(400).json({ error: 'Invalid category selected' });
 
-      // 1. Concurrency Check: Ensure BIB is not already assigned
-      const existing = await sb('nt_registrations?bib_no=eq.' + bib + '&select=bib_no,name,category,payment_status');
+      // Check both normalized and raw bib numbers for duplicates
+      const existing = await sb('nt_registrations?bib_no=in.(' + bib + ',' + rawBib + ')&select=bib_no,name,category,payment_status');
       if (existing && existing.length > 0) {
-        return res.status(409).json({ error: 'BIB #' + bib + ' is already assigned to ' + existing[0].name + ' (' + existing[0].category + ')!' });
+        return res.status(409).json({ error: 'BIB #' + rawBib + ' (System #' + bib + ') is already assigned to ' + existing[0].name + '!' });
       }
 
       const eventNames = {
@@ -123,7 +131,7 @@ module.exports = async (req, res) => {
     }
 
     if (a === 'remind-mark') {
-      const bib = parseInt(b.bib, 10), tag = String(b.tag || '');
+      const bib = normBib(b.bib), tag = String(b.tag || '');
       if (!bib || !['D10', 'D5', 'D2', 'D1'].includes(tag)) return res.status(400).json({ error: 'Invalid reminder' });
       const q = 'nt_registrations?bib_no=eq.' + bib + '&payment_status=eq.paid';
       const cur = (await sb(q + '&select=reminders'))[0];
@@ -152,31 +160,35 @@ module.exports = async (req, res) => {
       return res.status(200).json({ ok: true });
     }
 
+    // Attendance and Finish Line logic with automatic Bib normalization
     if (['attend', 'unattend', 'finish', 'unfinish'].includes(a)) {
-      const bib = parseInt(b.bib, 10);
-      if (!bib) return res.status(400).json({ error: 'Enter a BIB number' });
-      const base = 'nt_registrations?bib_no=eq.' + bib + '&payment_status=eq.paid';
+      const raw = parseInt(b.bib, 10);
+      if (!raw) return res.status(400).json({ error: 'Enter a BIB number' });
+      const bib = normBib(raw);
+
+      // Search matching either the 1000-series (1089) or raw 3-digit (89)
+      const base = 'nt_registrations?bib_no=in.(' + bib + ',' + raw + ')&payment_status=eq.paid';
       const sel = '&select=' + ORG_COLS;
       const cur = (await sb(base + sel))[0];
-      if (!cur) return res.status(404).json({ error: 'BIB ' + bib + ' not found (not registered or not paid)' });
+      if (!cur) return res.status(404).json({ error: 'BIB #' + raw + ' (#' + bib + ') not found or unpaid' });
 
       if (a === 'attend' || a === 'unattend') {
         if (a === 'attend' && cur.attended_at) return res.status(200).json({ entry: cur, already: true });
-        const u = await sb(base + sel, { method: 'PATCH', body: JSON.stringify({ attended_at: a === 'attend' ? new Date().toISOString() : null }) });
+        const u = await sb('nt_registrations?bib_no=eq.' + cur.bib_no + sel, { method: 'PATCH', body: JSON.stringify({ attended_at: a === 'attend' ? new Date().toISOString() : null }) });
         return res.status(200).json({ entry: u[0] || cur });
       }
 
       if (cur.category === 'AZ') return res.status(400).json({ error: 'Bodybuilding has no timed race' });
       if (a === 'unfinish') {
-        const u = await sb(base + sel, { method: 'PATCH', body: JSON.stringify({ finish_at: null }) });
+        const u = await sb('nt_registrations?bib_no=eq.' + cur.bib_no + sel, { method: 'PATCH', body: JSON.stringify({ finish_at: null }) });
         return res.status(200).json({ entry: u[0] || cur });
       }
       const st = (await sb('nt_race?category=eq.' + cur.category + '&select=started_at,stopped_at'))[0];
       if (!st) return res.status(400).json({ error: 'Race not started for this category yet' });
-      if (st.stopped_at) return res.status(400).json({ error: 'The race clock is stopped. Ask the admin to resume it.' });
+      if (st.stopped_at) return res.status(400).json({ error: 'The race clock is stopped. Ask admin to resume.' });
       const start = new Date(st.started_at).getTime();
       if (cur.finish_at) return res.status(200).json({ entry: cur, already: true, elapsed: new Date(cur.finish_at).getTime() - start });
-      const u = await sb(base + '&finish_at=is.null' + sel, { method: 'PATCH', body: JSON.stringify({ finish_at: new Date().toISOString() }) });
+      const u = await sb('nt_registrations?bib_no=eq.' + cur.bib_no + '&finish_at=is.null' + sel, { method: 'PATCH', body: JSON.stringify({ finish_at: new Date().toISOString() }) });
       const e = u[0] || cur;
       return res.status(200).json({ entry: e, elapsed: new Date(e.finish_at).getTime() - start });
     }
