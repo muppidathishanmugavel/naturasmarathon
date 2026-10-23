@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"><title>Admin – Natura's Trust</title>
 <style>
-:root{--g:#0e7a3d;--gd:#0a4f2a;--b:#0b5ea8;--o:#f59e0b}
+:root{--g:#0e7a3d;--gd:#0a4f2a;--b:#0b5ea8;--o:#f59e0b;--r:#dc2626}
 *{box-sizing:border-box;margin:0}
 body{font-family:'Segoe UI',system-ui,sans-serif;background:#f3faf5;color:#12281c;font-size:16px}
 header{background:var(--gd);color:#fff;padding:10px 14px;display:flex;align-items:center;gap:10px;font-weight:700}
@@ -10,8 +10,8 @@ main{max-width:1000px;margin:auto;padding:14px}
 .card{background:#fff;border-radius:14px;padding:14px;box-shadow:0 4px 14px #0e7a3d1c;margin-bottom:14px}
 button{font:inherit;font-weight:700;border:0;border-radius:10px;padding:10px 14px;background:var(--g);color:#fff;cursor:pointer}
 button.o{background:var(--o);color:#3a2500}button.s{background:#e3efe8;color:var(--gd)}button.r{background:#c0392b}
-button:disabled{opacity:.5}
-input,select{font:inherit;padding:10px;border:2px solid #cfe0d5;border-radius:10px}
+button:disabled{opacity:.5;cursor:not-allowed}
+input,select{font:inherit;padding:10px;border:2px solid #cfe0d5;border-radius:10px;width:100%}
 .tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}.tabs button{background:#e3efe8;color:var(--gd)}.tabs button.on{background:var(--g);color:#fff}
 .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:10px}
 table{width:100%;border-collapse:collapse;font-size:.92rem}th,td{padding:7px 8px;text-align:left;border-bottom:1px solid #e1ece5;white-space:nowrap}th{background:#eef7f1}
@@ -19,6 +19,8 @@ table{width:100%;border-collapse:collapse;font-size:.92rem}th,td{padding:7px 8px
 .msg{padding:12px;border-radius:10px;font-weight:700;margin:8px 0;background:#e3efe8}.msg.e{background:#fdecec;color:#8a1c1c}
 .sw{font:800 2.4rem/1.1 ui-monospace,Consolas,monospace;color:var(--b);margin:6px 0}
 .grid{display:grid;gap:12px}@media(min-width:700px){.grid{grid-template-columns:repeat(3,1fr)}}
+.grid2{display:grid;gap:12px;grid-template-columns:1fr}@media(min-width:600px){.grid2{grid-template-columns:1fr 1fr}}
+.grid3{display:grid;gap:12px;grid-template-columns:1fr}@media(min-width:600px){.grid3{grid-template-columns:1fr 1fr 1fr}}
 .chip{display:inline-block;background:#eef7f1;border-radius:999px;padding:4px 10px;margin:2px;font-weight:600;font-size:.9rem}
 h3{color:var(--gd);margin:14px 0 6px}
 video{width:100%;max-height:320px;border-radius:12px;background:#000}
@@ -36,14 +38,112 @@ video{width:100%;max-height:320px;border-radius:12px;background:#000}
 <header>🌿 Natura's Trust – <span id="roleName">Admin</span> <button class="s" onclick="logout()">Logout</button></header>
 <main>
 <div class="tabs">
-  <button data-t="reg" class="on">📋 Registrations</button>
+  <button data-t="spot" class="on">⚡ Spot Entry</button>
+  <button data-t="reg">📋 Registrations</button>
   <button data-t="att">✅ Attendance</button>
   <button data-t="race">⏱️ Race</button>
   <button data-t="win">🏆 Winners</button>
   <button data-t="rem">🔔 Reminders</button>
 </div>
 
-<section id="t_reg" class="tp">
+<!-- SPOT REGISTRATION DESK (For Admin & Organisers simultaneously) -->
+<section id="t_spot" class="tp">
+  <div class="card" style="border-top:4px solid var(--g)">
+    <h3 style="margin-top:0">⚡ Spot Registration & BIB Issue Desk</h3>
+    <p style="margin-bottom:14px;color:#475569;font-size:0.95rem">Enter participant details, assign the physical BIB in your hand (1-999), and instantly send their WhatsApp confirmation.</p>
+    
+    <div id="spotErr" class="msg e hide"></div>
+
+    <form id="spotForm" onsubmit="submitSpot(event)">
+      <div class="grid2" style="margin-bottom:12px">
+        <div>
+          <label><b>Category / Programme *</b></label>
+          <select id="spCat" required onchange="onCatChange()">
+            <option value="M5">5 KM Run / Elders Walk</option>
+            <option value="M7">7 KM Run</option>
+            <option value="KIDS">Kids Indoor Marathon</option>
+            <option value="AZ">Bodybuilding Championship</option>
+          </select>
+        </div>
+        <div>
+          <label><b style="color:var(--r)">Physical BIB Number in Hand (1-999) *</b></label>
+          <input type="number" id="spBib" min="1" max="999" required placeholder="e.g. 251" style="font-size:1.15rem;font-weight:bold;border-color:var(--r)">
+        </div>
+      </div>
+
+      <div class="grid2" style="margin-bottom:12px">
+        <div>
+          <label><b>Full Name *</b></label>
+          <input type="text" id="spName" required placeholder="Participant Name">
+        </div>
+        <div>
+          <label><b>WhatsApp Mobile No (10-digits) *</b></label>
+          <input type="tel" id="spPhone" required pattern="[0-9]{10}" placeholder="WhatsApp Number">
+        </div>
+      </div>
+
+      <div class="grid3" style="margin-bottom:12px">
+        <div>
+          <label><b>Age *</b></label>
+          <input type="number" id="spAge" min="3" max="100" required placeholder="e.g. 62">
+        </div>
+        <div>
+          <label><b>Gender *</b></label>
+          <select id="spGender">
+            <option value="M">Male / Boy</option>
+            <option value="F">Female / Girl</option>
+          </select>
+        </div>
+        <div>
+          <label><b>Town / City / Village</b></label>
+          <input type="text" id="spCity" placeholder="e.g. Mukkudal">
+        </div>
+      </div>
+
+      <div class="grid3" style="margin-bottom:14px">
+        <div>
+          <label><b>Payment Mode *</b></label>
+          <select id="spPayMode" onchange="onPayModeChange()">
+            <option value="Cash">Cash Collected</option>
+            <option value="Direct UPI">Direct UPI / QR Scan</option>
+            <option value="Complimentary">Complimentary / Free</option>
+          </select>
+        </div>
+        <div>
+          <label><b>Amount (₹)</b></label>
+          <input type="number" id="spAmount" value="200" min="0" step="10">
+        </div>
+        <div>
+          <label><b>UPI Ref / Desk Note</b></label>
+          <input type="text" id="spPayRef" placeholder="e.g. UTR / Desk 1">
+        </div>
+      </div>
+
+      <div class="row" style="margin-bottom:16px">
+        <label style="cursor:pointer"><input type="checkbox" id="spAttend" checked> <b>Mark Present Immediately</b> (BIB handed over at desk)</label>
+      </div>
+
+      <button type="submit" id="spSubmitBtn" style="width:100%;padding:12px;font-size:1.05rem">⚡ Register & Assign BIB</button>
+    </form>
+
+    <div id="spotSuccess" class="hide" style="margin-top:16px;padding:16px;background:#ecfdf5;border:2px solid #a7f3d0;border-radius:10px">
+      <h3 style="color:#065f46;margin-top:0">✅ Successfully Registered!</h3>
+      <p style="font-size:1.05rem;margin:4px 0">Assigned BIB: <b id="succBib" style="color:var(--r);font-size:1.6rem"></b> &nbsp; | &nbsp; <span id="succName"></span> (<span id="succCat"></span>)</p>
+      <p style="margin:6px 0;color:#065f46">Payment: <b id="succPay"></b></p>
+      <div class="row" style="margin-top:12px">
+        <a id="succWaBtn" class="wal" target="_blank" rel="noopener" style="font-size:1.05rem;padding:10px 18px">📲 Open & Send WhatsApp Confirmation</a>
+        <button class="o" id="succPrintBtn">🖨 Print Badge</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3 style="margin-top:0">Recent Spot Registrations Today</h3>
+    <div class="sc" id="recentSpotList"></div>
+  </div>
+</section>
+
+<section id="t_reg" class="tp hide">
   <div class="card"><div id="sum" class="row"></div>
     <div class="row noprint">
       <input id="q" placeholder="Search name / phone / BIB" style="flex:1;min-width:180px">
@@ -84,6 +184,7 @@ video{width:100%;max-height:320px;border-radius:12px;background:#000}
     <p style="margin-top:12px;color:#557">Bodybuilding is judged on stage – enter its winners manually.</p>
   </div>
 </section>
+
 <section id="t_rem" class="tp hide">
   <div class="card">
     <h3 style="margin-top:0">🔔 Send reminders (before the event)</h3>
@@ -98,7 +199,7 @@ video{width:100%;max-height:320px;border-radius:12px;background:#000}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jsQR/1.4.0/jsQR.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script>
-var T=null,ROLE='admin',D={rows:[],race:{},stop:{}},off=0,VIEW=[],tab='reg';
+var T=null,ROLE='admin',D={rows:[],race:{},stop:{}},off=0,VIEW=[],tab='spot',lastSpotEntry=null;
 try{T=sessionStorage.getItem('t');ROLE=sessionStorage.getItem('r')||'admin'}catch(e){}
 var $=function(i){return document.getElementById(i)};
 function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
@@ -109,6 +210,14 @@ function fdt(s){if(!s)return'';var d=new Date(s);if(isNaN(d))return'';return d.t
 function regAt(r){return r.paid_at||r.created_at}
 function pad(n){return(n<10?'0':'')+n}
 function fmt(ms,dp){if(ms<0)ms=0;var u=dp===2?10:100,t=Math.floor(ms/u),f=dp===2?100:10,d=t%f,s=Math.floor(t/f)%60,m=Math.floor(t/(60*f))%60,h=Math.floor(t/(3600*f));return(h?h+':':'')+pad(m)+':'+pad(s)+'.'+(dp===2?pad(d):d)}
+function payInfo(r){
+  if(r.razorpay_payment_id&&r.razorpay_payment_id.startsWith('SPOT_')){
+    var p=r.razorpay_payment_id.replace(/^SPOT_/,'').replace(/_/g,' ');
+    return p;
+  }
+  return r.razorpay_payment_id?'Online ('+r.razorpay_payment_id+')':'Online Gateway';
+}
+
 function api(action,extra){
   var b=Object.assign({action:action},extra||{});
   return fetch('/api/admin',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+(T||'')},body:JSON.stringify(b)})
@@ -118,13 +227,19 @@ function api(action,extra){
 }
 function flash(id,t,err){var e=$(id);e.textContent=t;e.className='msg'+(err?' e':'');}
 function logout(){T=null;try{sessionStorage.removeItem('t')}catch(e){}stopScan();$('app').classList.add('hide');$('login').classList.remove('hide')}
+
 function enter(){
   $('login').classList.add('hide');$('app').classList.remove('hide');
   var adm=ROLE==='admin';$('roleName').textContent=adm?'Admin':'Organiser';
-  document.querySelectorAll('.tabs button').forEach(function(b){var t=b.getAttribute('data-t');b.classList.toggle('hide',!adm&&(t==='reg'||t==='rem'))});
-  document.querySelector('.tabs button[data-t="'+(adm?'reg':'att')+'"]').click();
+  // Allow Spot Registration for BOTH Admin & Organiser
+  document.querySelectorAll('.tabs button').forEach(function(b){
+    var t=b.getAttribute('data-t');
+    b.classList.toggle('hide',!adm&&(t==='reg'||t==='rem'));
+  });
+  document.querySelector('.tabs button[data-t="spot"]').click();
   load();
 }
+
 $('lbtn').onclick=function(){$('lerr').className='msg e hide';api('login',{password:$('pw').value}).then(function(j){T=j.token;ROLE=j.role;try{sessionStorage.setItem('t',T);sessionStorage.setItem('r',ROLE)}catch(e){}enter()}).catch(function(e){$('lerr').textContent=e.message;$('lerr').className='msg e'})};
 $('pw').addEventListener('keydown',function(e){if(e.key==='Enter')$('lbtn').click()});
 if(T)enter();
@@ -137,34 +252,148 @@ document.querySelectorAll('.tabs button').forEach(function(b){b.onclick=function
 
 function load(){
   return api('list',{all:$('unp').checked}).then(function(j){
-    D.rows=j.rows;D.race={};D.stop={};if(j.role&&j.role!==ROLE){ROLE=j.role}j.race.forEach(function(r){D.race[r.category]=new Date(r.started_at).getTime();if(r.stopped_at)D.stop[r.category]=new Date(r.stopped_at).getTime()});
-    off=new Date(j.now).getTime()-Date.now();render();$('regMsg').className='msg e hide';
-  }).catch(function(e){if(T)flash('regMsg',e.message,1)});
+    D.rows=j.rows;D.race={};D.stop={};if(j.role&&j.role!==ROLE){ROLE=j.role}
+    j.race.forEach(function(r){D.race[r.category]=new Date(r.started_at).getTime();if(r.stopped_at)D.stop[r.category]=new Date(r.stopped_at).getTime()});
+    off=new Date(j.now).getTime()-Date.now();
+    render();
+    if($('regMsg'))$('regMsg').className='msg e hide';
+  }).catch(function(e){if(T&&$('regMsg'))flash('regMsg',e.message,1)});
 }
 setInterval(function(){if(T&&!document.hidden)load()},7000);
-$('q').oninput=$('fc').onchange=$('newest').onchange=function(){render()};$('unp').onchange=load;
 
+/* SPOT REGISTRATION LOGIC */
+function onCatChange(){
+  var c=$('spCat').value;
+  if(c==='KIDS')$('spAmount').value='150';
+  else if(c==='AZ')$('spAmount').value='300';
+  else $('spAmount').value='200';
+}
+function onPayModeChange(){
+  var m=$('spPayMode').value;
+  if(m==='Complimentary')$('spAmount').value='0';
+  else onCatChange();
+}
+
+function spotWaText(r,payStr){
+  var catName=CAT[r.category]||r.category;
+  return "🎉 *Natura's Trust - Spot Registration Confirmed!*\n"+
+    "--------------------------------\n"+
+    "வணக்கம் *"+r.name+"*,\n"+
+    "உங்கள் பதிவு வெற்றிகரமாக முடிந்தது.\n\n"+
+    "🎽 *BIB Number:* *"+r.bib_no+"*\n"+
+    "🏃 *Event:* "+catName+" ("+gl(r.category,r.gender)+")\n"+
+    "💳 *Payment:* Confirmed ("+payStr+")\n"+
+    "📅 *Date:* 25 Oct 2026\n"+
+    "📍 *Venue:* Mukkudal\n\n"+
+    "தயவுசெய்து உங்கள் மார்பில் BIB எண்ணை அணிந்துகொள்ளவும்.\n"+
+    "All the best for your event!\n"+
+    "Natura's Trust: "+location.origin;
+}
+
+function submitSpot(e){
+  e.preventDefault();
+  var btn=$('spSubmitBtn');
+  btn.disabled=true;btn.textContent='Registering...';
+  $('spotErr').className='msg e hide';
+  $('spotSuccess').classList.add('hide');
+
+  var payload={
+    category:$('spCat').value,
+    bib_no:parseInt($('spBib').value,10),
+    name:$('spName').value.trim(),
+    phone:$('spPhone').value.trim(),
+    age:parseInt($('spAge').value,10),
+    gender:$('spGender').value,
+    city:$('spCity').value.trim(),
+    payment_mode:$('spPayMode').value,
+    amount:$('spAmount').value,
+    payment_ref:$('spPayRef').value.trim(),
+    attended:$('spAttend').checked
+  };
+
+  api('spot-reg',payload).then(function(j){
+    lastSpotEntry=j.entry;
+    var paySummary=payload.payment_mode+(payload.amount>0?' - ₹'+payload.amount:'')+(payload.payment_ref?' ('+payload.payment_ref+')':'');
+    
+    // Fill Success Box
+    $('succBib').textContent='#'+payload.bib_no;
+    $('succName').textContent=payload.name;
+    $('succCat').textContent=CAT[payload.category]+' • '+gl(payload.category,payload.gender);
+    $('succPay').textContent=paySummary;
+
+    // Build WhatsApp Link
+    var waLink='https://wa.me/91'+payload.phone+'?text='+encodeURIComponent(spotWaText(payload,paySummary));
+    $('succWaBtn').href=waLink;
+    $('succPrintBtn').onclick=function(){printSingleBadge(j.entry)};
+
+    $('spotSuccess').classList.remove('hide');
+    window.open(waLink,'_blank'); // Direct trigger WhatsApp
+
+    // Advance to next bib and clear participant details
+    var nextBib=payload.bib_no+1;
+    $('spBib').value=nextBib<=999?nextBib:'';
+    $('spName').value='';
+    $('spPhone').value='';
+    $('spAge').value='';
+    $('spCity').value='';
+    $('spPayRef').value='';
+
+    btn.disabled=false;btn.textContent='⚡ Register & Assign BIB';
+    load();
+    $('spName').focus();
+  }).catch(function(err){
+    $('spotErr').textContent='❌ '+err.message;
+    $('spotErr').className='msg e';
+    btn.disabled=false;btn.textContent='⚡ Register & Assign BIB';
+  });
+}
+
+function renderRecentSpot(){
+  var spots=D.rows.filter(function(r){return r.reg_no&&r.reg_no.indexOf('SPOT')>-1}).sort(function(a,b){return new Date(regAt(b))-new Date(regAt(a))});
+  $('recentSpotList').innerHTML=spots.length?'<table><tr><th>BIB</th><th>Name</th><th>Event</th><th>Phone</th><th>City</th><th>Payment</th><th>Present</th></tr>'+
+  spots.slice(0,25).map(function(r){
+    return'<tr><td><b>#'+r.bib_no+'</b></td><td>'+esc(r.name)+'</td><td>'+CAT[r.category]+' • '+gl(r.category,r.gender)+'</td><td>'+esc(r.phone)+'</td><td>'+esc(r.city||'—')+'</td><td>'+payInfo(r)+'</td><td>'+(r.attended_at?'✅':'—')+'</td></tr>'
+  }).join('')+'</table>':'<p style="color:#64748b;margin:6px 0">No spot registrations entered yet.</p>';
+}
+
+function printSingleBadge(r){
+  var d=document.createElement('div');new QRCode(d,{text:'NT:'+r.bib_no,width:150,height:150});
+  var cv=d.querySelector('canvas');
+  var item='<div class="b"><div class="h">NATURA\'S TRUST MARATHON 2026</div><div class="n">'+r.bib_no+'</div><div class="nm">'+esc(r.name)+'</div><div class="m">'+CAT[r.category]+' • '+gl(r.category,r.gender)+'</div><img src="'+(cv?cv.toDataURL():'')+'"><div class="m">'+esc(r.reg_no)+'</div></div>';
+  var w=window.open('','_blank');
+  w.document.write('<html><head><title>BIB badge</title><style>body{font-family:Arial,sans-serif;margin:8mm}.b{border:2px solid #0e7a3d;border-radius:8px;text-align:center;padding:12px;width:320px;margin:auto}.h{background:#0e7a3d;color:#fff;font-weight:bold;padding:6px;font-size:12px}.n{font-size:64px;font-weight:900;line-height:1.1}.nm{font-size:18px;font-weight:bold}.m{font-size:13px;color:#333}</style></head><body>'+item+'</body></html>');
+  w.document.close();setTimeout(function(){w.print()},500);
+}
+
+/* SEARCH & REGISTRATION VIEWS */
+$('q').oninput=$('fc').onchange=$('newest').onchange=function(){render()};$('unp').onchange=load;
 function ranks(){var g={},R={};
   D.rows.filter(function(r){return r.finish_at&&D.race[r.category]}).sort(function(a,b){return new Date(a.finish_at)-new Date(b.finish_at)}).forEach(function(r){var k=r.category+r.gender;g[k]=(g[k]||0)+1;R[r.bib_no]=g[k]});return R}
 function el(r){return new Date(r.finish_at).getTime()-D.race[r.category]}
 
-function render(){if(ROLE==='admin'){renderReg();renderRem()}renderWin();renderAtt();renderRace()}
+function render(){
+  renderRecentSpot();
+  if(ROLE==='admin'){renderReg();renderRem()}
+  renderWin();renderAtt();renderRace();
+}
 
 function renderReg(){
   var paid=D.rows.filter(function(r){return r.payment_status==='paid'}),cn={};
   paid.forEach(function(r){cn[r.category]=(cn[r.category]||0)+1});
-  $('sum').innerHTML='<span class="chip">Paid: <b>'+paid.length+'</b></span>'+Object.keys(CAT).map(function(c){return'<span class="chip">'+CAT[c]+': <b>'+(cn[c]||0)+'</b></span>'}).join('')+'<span class="chip">Present: <b>'+paid.filter(function(r){return r.attended_at}).length+'</b></span><span class="chip">No Aadhaar: <b>'+paid.filter(function(r){return!r.aadhaar_last4}).length+'</b></span>';
+  $('sum').innerHTML='<span class="chip">Paid: <b>'+paid.length+'</b></span>'+Object.keys(CAT).map(function(c){return'<span class="chip">'+CAT[c]+': <b>'+(cn[c]||0)+'</b></span>'}).join('')+'<span class="chip">Present: <b>'+paid.filter(function(r){return r.attended_at}).length+'</b></span>';
   var q=$('q').value.trim().toLowerCase(),c=$('fc').value;
   VIEW=D.rows.filter(function(r){return(!c||r.category===c)&&(!q||(r.name+' '+r.phone+' '+(r.bib_no||'')+' '+(r.city||'')).toLowerCase().indexOf(q)>-1)});
   if($('newest').checked)VIEW.sort(function(a,b){return new Date(regAt(b))-new Date(regAt(a))});
-  $('regList').innerHTML='<table><tr><th>BIB</th><th>Name</th><th>Registered</th><th>Event</th><th>Group</th><th>Age</th><th>DOB</th><th>Phone</th><th>City</th><th>Aadhaar</th><th>Status</th><th>Present</th></tr>'+
-  VIEW.map(function(r){return'<tr><td><b>'+(r.bib_no||'-')+'</b></td><td>'+esc(r.name)+'</td><td>'+fdt(regAt(r))+'</td><td>'+CAT[r.category]+'</td><td>'+gl(r.category,r.gender)+'</td><td>'+r.age+'</td><td>'+esc(r.date_of_birth||'')+'</td><td>'+esc(r.phone)+'</td><td>'+esc(r.city||'')+'</td><td>'+(r.aadhaar_last4?esc(r.aadhaar_last4):'—')+'</td><td>'+r.payment_status+'</td><td>'+(r.attended_at?'✅':'')+'</td></tr>'}).join('')+'</table>';
+  $('regList').innerHTML='<table><tr><th>BIB</th><th>Name</th><th>Registered</th><th>Event</th><th>Group</th><th>Age</th><th>Phone</th><th>City</th><th>Payment</th><th>Status</th><th>Present</th></tr>'+
+  VIEW.map(function(r){return'<tr><td><b>'+(r.bib_no||'-')+'</b></td><td>'+esc(r.name)+'</td><td>'+fdt(regAt(r))+'</td><td>'+CAT[r.category]+'</td><td>'+gl(r.category,r.gender)+'</td><td>'+r.age+'</td><td>'+esc(r.phone)+'</td><td>'+esc(r.city||'')+'</td><td>'+payInfo(r)+'</td><td>'+r.payment_status+'</td><td>'+(r.attended_at?'✅':'')+'</td></tr>'}).join('')+'</table>';
 }
+
 function csv(){
-  var rows=[['BIB','Reg No','Name','Registered (IST)','Age','DOB','Group','Event','Phone','City','Aadhaar last 4','Amount','Status','Paid At','Present','Finish Time']].concat(VIEW.map(function(r){return[r.bib_no||'',r.reg_no||'',r.name,fdt(regAt(r)),r.age,r.date_of_birth||'',gl(r.category,r.gender),CAT[r.category],r.phone,r.city||'',r.aadhaar_last4||'',r.amount,r.payment_status,r.paid_at||'',r.attended_at?'Yes':'No',(r.finish_at&&D.race[r.category])?fmt(el(r),2):'']}));
+  var rows=[['BIB','Reg No','Name','Registered (IST)','Age','Group','Event','Phone','City','Payment Mode','Amount','Status','Paid At','Present','Finish Time']].concat(VIEW.map(function(r){return[r.bib_no||'',r.reg_no||'',r.name,fdt(regAt(r)),r.age,gl(r.category,r.gender),CAT[r.category],r.phone,r.city||'',payInfo(r),r.amount,r.payment_status,r.paid_at||'',r.attended_at?'Yes':'No',(r.finish_at&&D.race[r.category])?fmt(el(r),2):'']}));
   var s=rows.map(function(a){return a.map(function(x){return'"'+String(x).replace(/"/g,'""')+'"'}).join(',')}).join('\r\n');
   var a=document.createElement('a');a.href=URL.createObjectURL(new Blob(['\ufeff'+s],{type:'text/csv'}));a.download='natura-registrations.csv';a.click();
 }
+
 function badges(){
   var L=VIEW.filter(function(r){return r.bib_no});if(!L.length)return alert('No paid entries in this list');
   var items=L.map(function(r){var d=document.createElement('div');new QRCode(d,{text:'NT:'+r.bib_no,width:150,height:150});var cv=d.querySelector('canvas');
@@ -174,7 +403,7 @@ function badges(){
   w.document.close();setTimeout(function(){w.print()},600);
 }
 
-/* scanning (camera) */
+/* SCANNING (CAMERA) */
 var SC={s:null,raf:0,last:'',t:0};
 function stopScan(){if(SC.raf)cancelAnimationFrame(SC.raf);SC.raf=0;if(SC.s){SC.s.getTracks().forEach(function(t){t.stop()});SC.s=null}['scanA','scanR'].forEach(function(i){$(i).innerHTML='';$(i).classList.add('hide')})}
 function toggleScan(boxId,cb){
@@ -192,7 +421,7 @@ function toggleScan(boxId,cb){
 function bibOf(t){var m=/NT:(\d+)/.exec(t);return m?m[1]:(/^\d+$/.test(String(t).trim())?String(t).trim():null)}
 function who(e){return'#'+e.bib_no+' '+e.name+' ('+CAT[e.category]+' • '+gl(e.category,e.gender)+')'}
 
-/* attendance */
+/* ATTENDANCE */
 function mark(bib){return api('attend',{bib:bib}).then(function(j){flash('attMsg',(j.already?'ℹ️ Already marked: ':'✅ Present: ')+who(j.entry));return load()}).catch(function(e){flash('attMsg','❌ '+e.message,1)})}
 function markCode(t){var b=bibOf(t);if(b)mark(b);else flash('attMsg','❌ Not a valid code',1)}
 function markBox(){var b=bibOf($('ab').value);if(b)mark(b).then(function(){$('ab').value='';$('ab').focus()});else flash('attMsg','❌ Enter a BIB number',1)}
@@ -205,7 +434,7 @@ function renderAtt(){
 }
 function unmark(b){api('unattend',{bib:b}).then(load)}
 
-/* race */
+/* RACE TIMING */
 function startRace(c){api('race-start',{category:c}).then(load).catch(function(e){alert(e.message)})}
 function stopRace(c){if(confirm('Stop the '+CAT[c]+' clock? Finish entries will be blocked until you resume.'))api('race-stop',{category:c}).then(load).catch(function(e){alert(e.message)})}
 function resumeRace(c){api('race-resume',{category:c}).then(load).catch(function(e){alert(e.message)})}
@@ -226,7 +455,7 @@ function renderRace(){
 }
 setInterval(function(){['M7','M5','KIDS'].forEach(function(c){var e=$('sw_'+c);if(e)e.textContent=D.race[c]?fmt((D.stop[c]||(Date.now()+off))-D.race[c]):'00:00.0'})},100);
 
-/* reminders */
+/* REMINDERS */
 var REM=[{t:'D10',n:10,day:15},{t:'D5',n:5,day:20},{t:'D2',n:2,day:23},{t:'D1',n:1,day:24}],remSel='D10';
 var COMM='https://chat.whatsapp.com/BLizhCOK5KiBVf1GQwIWob';
 function remText(r,n,name){
@@ -255,7 +484,7 @@ function clip(t,msg){if(navigator.clipboard&&window.isSecureContext)navigator.cl
 function copyNums(){var n=D.rows.filter(function(r){return r.payment_status==='paid'&&String(r.reminders||'').split(',').indexOf(remSel)<0}).map(function(r){return'+91'+r.phone});clip(n.join('\n'),n.length+' pending numbers copied')}
 function copyMsg(){var n=REM.filter(function(x){return x.t===remSel})[0].n;clip(remText({category:'M7'},n,'participant').replace(/\n(Marathon|7 KM)[^\n]*\n/,'\n'),'Message copied')}
 
-/* winners */
+/* WINNERS */
 function renderWin(){
   var h='';[['M7','M'],['M7','F'],['M5','M'],['M5','F'],['KIDS','M'],['KIDS','F']].forEach(function(p){
     var L=D.rows.filter(function(r){return r.category===p[0]&&r.gender===p[1]&&r.finish_at&&D.race[p[0]]}).sort(function(a,b){return new Date(a.finish_at)-new Date(b.finish_at)});
