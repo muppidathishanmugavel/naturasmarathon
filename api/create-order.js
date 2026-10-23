@@ -3,6 +3,9 @@ const { sb, cf } = require('./_lib');
 const PH = /^[6-9]\d{9}$/;
 const s = (v, n) => String(v == null ? '' : v).trim().slice(0, n);
 
+// Hard cutoff: 25 October 2026 at 6:00:00 AM IST
+const CUTOFF_MS = new Date('2026-10-25T06:00:00+05:30').getTime();
+
 // Age on the event day (25 Oct 2026), calculated from the date of birth
 function ageOn(dob) {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(dob)) return null;
@@ -25,6 +28,13 @@ function category(event, age) {
 module.exports = async (req, res) => {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
   try {
+    // 1. Enforce 6:00 AM IST cutoff
+    if (Date.now() >= CUTOFF_MS) {
+      return res.status(403).json({
+        error: 'Online registration closed at 6:00 AM. You can register on the spot at the venue registration counter! / ஆன்லைன் பதிவு காலை 6:00 மணிக்கு நிறைவடைந்தது. நிகழ்வு மைதானத்தில் உள்ள கவுண்டரில் நேரடியாக (Spot Registration) பதிவு செய்து கொள்ளலாம்.'
+      });
+    }
+
     const missing = ['CASHFREE_APP_ID', 'CASHFREE_SECRET_KEY', 'SUPABASE_URL', 'SUPABASE_SERVICE_ROLE_KEY'].filter((k) => !process.env[k]);
     if (missing.length) return res.status(500).json({ error: 'Server setup incomplete. Missing in Vercel: ' + missing.join(', ') });
 
