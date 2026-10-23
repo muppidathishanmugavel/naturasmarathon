@@ -1,5 +1,5 @@
 // Single admin API (keeps the Vercel function count low).
-// Two roles: "admin" (everything, incl. stopwatch) and "organiser" (attendance + finish-line entry only).
+// Two roles: "admin" (everything, incl. stopwatch) and "organiser" (attendance, finish-line, and spot registration).
 const crypto = require('crypto');
 const { sb } = require('./_lib');
 
@@ -9,12 +9,12 @@ const sha = (x) => crypto.createHash('sha256').update(String(x)).digest();
 const same = (a, b) => crypto.timingSafeEqual(sha(a), sha(b));
 const sign = (p) => crypto.createHmac('sha256', PW()).update(p).digest('base64url');
 
-const COLS = 'bib_no,reg_no,name,age,date_of_birth,aadhaar_last4,gender,category,event,phone,city,amount,payment_status,paid_at,attended_at,finish_at,created_at,reminders';
-const ORG_COLS = 'bib_no,reg_no,name,age,gender,category,payment_status,attended_at,finish_at'; // no phone / city / amount for organisers
+const COLS = 'bib_no,reg_no,name,age,date_of_birth,aadhaar_last4,gender,category,event,phone,city,amount,payment_status,paid_at,attended_at,finish_at,created_at,reminders,razorpay_payment_id';
+const ORG_COLS = 'bib_no,reg_no,name,age,gender,category,payment_status,attended_at,finish_at,razorpay_payment_id';
 const ADMIN_ONLY = ['race-start', 'race-stop', 'race-resume', 'race-reset', 'remind-mark'];
 
 function makeToken(role) {
-  const p = Buffer.from(JSON.stringify({ exp: Date.now() + 12 * 3600 * 1000, role })).toString('base64url');
+  const p = Buffer.from(JSON.stringify({ exp: Date.now() + 14 * 3600 * 1000, role })).toString('base64url');
   return p + '.' + sign(p);
 }
 function readToken(h) {
@@ -57,7 +57,7 @@ module.exports = async (req, res) => {
     const user = readToken(req.headers.authorization);
     if (!user) return res.status(401).json({ error: 'Please login again' });
     const isAdmin = user.role === 'admin';
-    if (ADMIN_ONLY.includes(a) && !isAdmin) return res.status(403).json({ error: 'Only the admin can control the stopwatch' });
+    if (ADMIN_ONLY.includes(a) && !isAdmin) return res.status(403).json({ error: 'Only the admin can perform this action' });
 
     if (a === 'list') {
       const rows = await allRows(isAdmin && !!b.all, isAdmin ? COLS : ORG_COLS);
@@ -65,7 +65,64 @@ module.exports = async (req, res) => {
       return res.status(200).json({ rows, race, now: new Date().toISOString(), role: user.role });
     }
 
-    if (a === 'remind-mark') { // remember that a reminder (D10/D5/D2/D1) was sent to a participant
+    // Spot Registration Handler (Used simultaneously by Admin or Organisers at desks)
+    if (a === 'spot-reg') {
+      const bib = parseInt(b.bib_no, 10);
+      if (!bib || bib < 1 || bib > 999) return res.status(400).json({ error: 'Enter a valid BIB number between 1 and 999' });
+
+      const name = String(b.name || '').trim();
+      const phone = String(b.phone || '').trim().replace(/\D/g, '').slice(-10);
+      const category = String(b.category || '').trim();
+      if (!name) return res.status(400).json({ error: 'Participant name is required' });
+      if (!phone || phone.length !== 10) return res.status(400).json({ error: 'Enter a valid 10-digit mobile number' });
+      if (!['M7', 'M5', 'KIDS', 'AZ'].includes(category)) return res.status(400).json({ error: 'Invalid category selected' });
+
+      // 1. Concurrency Check: Ensure BIB is not already assigned
+      const existing = await sb('nt_registrations?bib_no=eq.' + bib + '&select=bib_no,name,category,payment_status');
+      if (existing && existing.length > 0) {
+        return res.status(409).json({ error: 'BIB #' + bib + ' is already assigned to ' + existing[0].name + ' (' + existing[0].category + ')!' });
+      }
+
+      const eventNames = {
+        M7: '7 KM Marathon',
+        M5: '5 KM Marathon',
+        KIDS: 'Kids Indoor Marathon',
+        AZ: 'Bodybuilding Championship'
+      };
+
+      const payMode = String(b.payment_mode || 'Cash').trim();
+      const payRef = String(b.payment_ref || '').trim();
+      const payRecord = 'SPOT_' + payMode.toUpperCase().replace(/\s+/g, '_') + (payRef ? ':' + payRef : '');
+
+      const newRow = {
+        bib_no: bib,
+        reg_no: 'NT-SPOT-' + bib,
+        name: name,
+        age: parseInt(b.age, 10) || null,
+        date_of_birth: b.dob ? String(b.dob).trim() : null,
+        gender: b.gender === 'F' ? 'F' : 'M',
+        category: category,
+        event: eventNames[category] || category,
+        phone: phone,
+        city: String(b.city || '').trim(),
+        amount: parseFloat(b.amount) || 0,
+        payment_status: 'paid',
+        paid_at: new Date().toISOString(),
+        attended_at: b.attended ? new Date().toISOString() : null,
+        created_at: new Date().toISOString(),
+        razorpay_payment_id: payRecord,
+        reminders: 'SPOT,' + payMode
+      };
+
+      const inserted = await sb('nt_registrations', {
+        method: 'POST',
+        body: JSON.stringify(newRow)
+      });
+
+      return res.status(200).json({ ok: true, entry: inserted[0] || newRow });
+    }
+
+    if (a === 'remind-mark') {
       const bib = parseInt(b.bib, 10), tag = String(b.tag || '');
       if (!bib || !['D10', 'D5', 'D2', 'D1'].includes(tag)) return res.status(400).json({ error: 'Invalid reminder' });
       const q = 'nt_registrations?bib_no=eq.' + bib + '&payment_status=eq.paid';
