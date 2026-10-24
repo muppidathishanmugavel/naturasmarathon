@@ -165,7 +165,7 @@ video{width:100%;max-height:320px;border-radius:12px;background:#000}
       <label><input type="checkbox" id="unp"> include unpaid</label>
       <label><input type="checkbox" id="newest"> newest first</label>
     </div>
-    <div class="row noprint"><button onclick="csv()">⬇ Export CSV</button><button class="o" onclick="badges()">🖨 Print BIB badges (this list)</button></div>
+    <div class="row noprint"><button onclick="csv()">⬇ Export CSV</button><button onclick="xlsx()">📊 Export Excel (.xlsx)</button><button class="o" onclick="printList()">🖨 Print full list (with Aadhaar)</button><button class="o" onclick="badges()">🖨 Print BIB badges (this list)</button></div>
     <div id="regMsg" class="msg e hide"></div>
     <div class="sc" id="regList"></div>
   </div>
@@ -212,6 +212,7 @@ video{width:100%;max-height:320px;border-radius:12px;background:#000}
 </section>
 </main></div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jsQR/1.4.0/jsQR.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script>
@@ -224,6 +225,7 @@ var PRIZE={M7:['₹3,000','₹2,000','₹1,000'],M5:['₹2,000','₹1,000','₹5
 function gl(c,g){return(c==='M7'||c==='AZ')?(g==='F'?'Women':'Men'):(g==='F'?'Girls':'Boys')}
 function fdt(s){if(!s)return'';var d=new Date(s);if(isNaN(d))return'';return d.toLocaleString('en-IN',{timeZone:'Asia/Kolkata',day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit',hour12:true})}
 function regAt(r){return r.paid_at||r.created_at}
+function aad(r){var v=String(r.aadhaar_last4==null?'':r.aadhaar_last4).trim();return /^\d{4}$/.test(v)?v:'0000'}
 function pad(n){return(n<10?'0':'')+n}
 function fmt(ms,dp){if(ms<0)ms=0;var u=dp===2?10:100,t=Math.floor(ms/u),f=dp===2?100:10,d=t%f,s=Math.floor(t/f)%60,m=Math.floor(t/(60*f))%60,h=Math.floor(t/(3600*f));return(h?h+':':'')+pad(m)+':'+pad(s)+'.'+(dp===2?pad(d):d)}
 
@@ -469,12 +471,35 @@ function renderReg(){
   });
   if($('newest').checked)VIEW.sort(function(a,b){return new Date(regAt(b))-new Date(regAt(a))});
 
-  $('regList').innerHTML='<table><tr><th>BIB (Cloth / Sys)</th><th>Name</th><th>Registered</th><th>Event</th><th>Group</th><th>Age</th><th>Phone</th><th>City</th><th>Payment</th><th>Status</th><th>Present</th></tr>'+
-  VIEW.map(function(r){return'<tr><td><b>'+dispBib(r.bib_no)+'</b></td><td>'+esc(r.name)+'</td><td>'+fdt(regAt(r))+'</td><td>'+CAT[r.category]+'</td><td>'+gl(r.category,r.gender)+'</td><td>'+r.age+'</td><td>'+esc(r.phone)+'</td><td>'+esc(r.city||'')+'</td><td>'+payInfo(r)+'</td><td>'+r.payment_status+'</td><td>'+(r.attended_at?'✅':'')+'</td></tr>'}).join('')+'</table>';
+  $('regList').innerHTML='<table><tr><th>BIB (Cloth / Sys)</th><th>Name</th><th>Registered</th><th>Event</th><th>Group</th><th>Age</th><th>Phone</th><th>Aadhaar (last 4)</th><th>City</th><th>Payment</th><th>Status</th><th>Present</th></tr>'+
+  VIEW.map(function(r){return'<tr><td><b>'+dispBib(r.bib_no)+'</b></td><td>'+esc(r.name)+'</td><td>'+fdt(regAt(r))+'</td><td>'+CAT[r.category]+'</td><td>'+gl(r.category,r.gender)+'</td><td>'+r.age+'</td><td>'+esc(r.phone)+'</td><td>'+aad(r)+'</td><td>'+esc(r.city||'')+'</td><td>'+payInfo(r)+'</td><td>'+r.payment_status+'</td><td>'+(r.attended_at?'✅':'')+'</td></tr>'}).join('')+'</table>';
+}
+
+function listRows(){
+  return VIEW.map(function(r,i){return[i+1,(r.bib_no>=1000?(r.bib_no-1000):r.bib_no)||'',r.bib_no||'',r.reg_no||'',r.name,fdt(regAt(r)),r.age,gl(r.category,r.gender),CAT[r.category],String(r.phone||''),aad(r),r.city||'',payInfo(r),r.amount==null?'':r.amount,r.payment_status,r.attended_at?'Yes':'No']});
+}
+var LIST_HEAD=['S.No','Physical BIB','System BIB','Reg No','Name','Registered (IST)','Age','Group','Event','Phone','Aadhaar Last 4','City','Payment Mode','Amount','Status','Present'];
+function xlsx(){
+  if(!window.XLSX)return alert('Excel library did not load. Check internet and refresh.');
+  if(!VIEW.length)return alert('No entries in this list');
+  var ws=XLSX.utils.aoa_to_sheet([LIST_HEAD].concat(listRows()),{cellDates:false});
+  ws['!cols']=[6,12,11,14,26,20,6,16,18,13,15,16,18,8,10,9].map(function(w){return{wch:w}});
+  ws['!autofilter']={ref:XLSX.utils.encode_range({s:{r:0,c:0},e:{r:VIEW.length,c:LIST_HEAD.length-1}})};
+  for(var r=1;r<=VIEW.length;r++){[9,10].forEach(function(c){var a=XLSX.utils.encode_cell({r:r,c:c});if(ws[a]){ws[a].t='s';ws[a].z='@'}})} // phone & Aadhaar stay text (keeps 0000)
+  var wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'Registrations');
+  XLSX.writeFile(wb,'natura-registrations.xlsx');
+}
+function printList(){
+  if(!VIEW.length)return alert('No entries in this list');
+  var head='<tr>'+LIST_HEAD.map(function(h){return'<th>'+esc(h)+'</th>'}).join('')+'</tr>';
+  var body=listRows().map(function(a){return'<tr>'+a.map(function(x){return'<td>'+esc(x)+'</td>'}).join('')+'</tr>'}).join('');
+  var w=window.open('','_blank');if(!w)return alert('Allow pop-ups to print');
+  w.document.write('<html><head><title>Registrations</title><style>@page{size:A4 landscape;margin:8mm}body{font-family:Arial,sans-serif;font-size:10px}h2{margin:0 0 4px}table{border-collapse:collapse;width:100%}th,td{border:1px solid #888;padding:3px 4px;text-align:left}th{background:#e3efe8}thead{display:table-header-group}tr{page-break-inside:avoid}</style></head><body><h2>Natura’s Trust Marathon 2026 – Registrations ('+VIEW.length+')</h2><div>Printed: '+esc(fdt(new Date().toISOString()))+'</div><table><thead>'+head+'</thead><tbody>'+body+'</tbody></table></body></html>');
+  w.document.close();setTimeout(function(){w.focus();w.print()},400);
 }
 
 function csv(){
-  var rows=[['Physical BIB','System BIB','Reg No','Name','Registered (IST)','Age','Group','Event','Phone','City','Payment Mode','Amount','Status','Paid At','Present','Finish Time']].concat(VIEW.map(function(r){return[(r.bib_no>=1000?(r.bib_no-1000):r.bib_no)||'',r.bib_no||'',r.reg_no||'',r.name,fdt(regAt(r)),r.age,gl(r.category,r.gender),CAT[r.category],r.phone,r.city||'',payInfo(r),r.amount,r.payment_status,r.paid_at||'',r.attended_at?'Yes':'No',(r.finish_at&&D.race[r.category])?fmt(el(r),2):'']}));
+  var rows=[['Physical BIB','System BIB','Reg No','Name','Registered (IST)','Age','Group','Event','Phone','Aadhaar Last 4','City','Payment Mode','Amount','Status','Paid At','Present','Finish Time']].concat(VIEW.map(function(r){return[(r.bib_no>=1000?(r.bib_no-1000):r.bib_no)||'',r.bib_no||'',r.reg_no||'',r.name,fdt(regAt(r)),r.age,gl(r.category,r.gender),CAT[r.category],r.phone,'="'+aad(r)+'"',r.city||'',payInfo(r),r.amount,r.payment_status,r.paid_at||'',r.attended_at?'Yes':'No',(r.finish_at&&D.race[r.category])?fmt(el(r),2):'']}));
   var s=rows.map(function(a){return a.map(function(x){return'"'+String(x).replace(/"/g,'""')+'"'}).join(',')}).join('\r\n');
   var a=document.createElement('a');a.href=URL.createObjectURL(new Blob(['\ufeff'+s],{type:'text/csv'}));a.download='natura-registrations.csv';a.click();
 }
