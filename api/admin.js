@@ -9,7 +9,7 @@ const sha = (x) => crypto.createHash('sha256').update(String(x)).digest();
 const same = (a, b) => crypto.timingSafeEqual(sha(a), sha(b));
 const sign = (p) => crypto.createHmac('sha256', PW()).update(p).digest('base64url');
 
-const COLS = 'bib_no,reg_no,name,age,date_of_birth,aadhaar_last4,gender,category,event,phone,city,amount,payment_status,paid_at,attended_at,finish_at,created_at,reminders,razorpay_payment_id';
+const COLS = 'bib_no,reg_no,name,age,date_of_birth,aadhaar_last4,gender,category,event,phone,city,amount,payment_status,paid_at,attended_at,finish_at,created_at,reminders,razorpay_order_id,razorpay_payment_id';
 const ORG_COLS = 'bib_no,reg_no,name,age,gender,category,payment_status,attended_at,finish_at,razorpay_payment_id';
 const ADMIN_ONLY = ['race-start', 'race-stop', 'race-resume', 'race-reset', 'remind-mark'];
 
@@ -101,13 +101,14 @@ module.exports = async (req, res) => {
       const payMode = String(b.payment_mode || 'Cash').trim();
       const payRef = String(b.payment_ref || '').trim();
       const payRecord = 'SPOT_' + payMode.toUpperCase().replace(/\s+/g, '_') + (payRef ? ':' + payRef : '');
+      const spotOrderId = 'NT-SPOT-' + bib + '-' + Date.now();
 
       const newRow = {
         bib_no: bib,
         reg_no: 'NT-SPOT-' + bib,
         name: name,
         age: parseInt(b.age, 10) || null,
-        date_of_birth: b.dob ? String(b.dob).trim() : null,
+        date_of_birth: b.dob ? String(b.dob).trim() : (b.age ? (2026 - parseInt(b.age, 10)) + '-01-01' : null),
         gender: b.gender === 'F' ? 'F' : 'M',
         category: category,
         event: eventNames[category] || category,
@@ -118,6 +119,7 @@ module.exports = async (req, res) => {
         paid_at: new Date().toISOString(),
         attended_at: b.attended ? new Date().toISOString() : null,
         created_at: new Date().toISOString(),
+        razorpay_order_id: spotOrderId,
         razorpay_payment_id: payRecord,
         reminders: 'SPOT,' + payMode
       };
@@ -160,13 +162,12 @@ module.exports = async (req, res) => {
       return res.status(200).json({ ok: true });
     }
 
-    // Attendance and Finish Line logic with automatic Bib normalization
+    // Attendance and Finish Line logic
     if (['attend', 'unattend', 'finish', 'unfinish'].includes(a)) {
       const raw = parseInt(b.bib, 10);
       if (!raw) return res.status(400).json({ error: 'Enter a BIB number' });
       const bib = normBib(raw);
 
-      // Search matching either the 1000-series (1089) or raw 3-digit (89)
       const base = 'nt_registrations?bib_no=in.(' + bib + ',' + raw + ')&payment_status=eq.paid';
       const sel = '&select=' + ORG_COLS;
       const cur = (await sb(base + sel))[0];
