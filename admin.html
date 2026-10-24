@@ -26,6 +26,24 @@ h3{color:var(--gd);margin:14px 0 6px}
 video{width:100%;max-height:320px;border-radius:12px;background:#000}
 .bigin{font-size:1.3rem;width:160px}
 .wal{display:inline-block;background:#25d366;color:#053b1a;font-weight:700;padding:8px 12px;border-radius:10px;text-decoration:none}
+
+.fld{margin-bottom:12px}
+.lb{display:block;font-weight:700;margin-bottom:5px}.lb.red{color:var(--r)}
+.note{margin-bottom:12px;color:#475569;font-size:.95rem}
+.bigbib{font-size:2.2rem;font-weight:900;text-align:center;letter-spacing:2px;border-color:var(--r);padding:12px}
+.bst{margin-top:6px;font-weight:700;min-height:1.4em}.bst.ok{color:#065f46}.bst.no{color:#b91c1c}
+.chips{display:grid;gap:8px;grid-template-columns:1fr 1fr}.chips.three{grid-template-columns:1fr 1fr 1fr}
+.chp input{display:none}
+.chp span{display:block;text-align:center;border:2px solid #cfe0d5;border-radius:12px;padding:10px 6px;font-weight:700;background:#fff;cursor:pointer;line-height:1.25}
+.chp span small{display:block;font-weight:600;color:#557;font-size:.78rem}
+.chp input:checked+span{background:var(--g);border-color:var(--g);color:#fff}
+.chp input:checked+span small{color:#e8f5ec}
+.bigbtn{width:100%;padding:14px;font-size:1.1rem}
+.rvbox{border:3px solid var(--g);border-radius:14px;padding:14px;background:#f8fdf9}
+.rvh{font-weight:800;color:var(--gd);margin-bottom:6px}
+.rvbib{font:900 3.4rem/1.1 ui-monospace,Consolas,monospace;color:var(--r);text-align:center;margin:4px 0 8px}
+.rvt td{border:0;padding:3px 6px;white-space:normal}.rvt td:first-child{color:#557;font-weight:600;width:38%}
+.rvw{background:#fff7e0;border:2px solid var(--o);border-radius:10px;padding:10px;margin-top:10px;font-weight:600;color:#6b4500}
 @media print{header,.tabs,.noprint{display:none!important}.card{box-shadow:none}}
 </style></head><body>
 <div id="login" class="card" style="max-width:380px;margin:60px auto">
@@ -50,81 +68,77 @@ video{width:100%;max-height:320px;border-radius:12px;background:#000}
 <section id="t_spot" class="tp">
   <div class="card" style="border-top:4px solid var(--g)">
     <h3 style="margin-top:0">⚡ Spot Registration &amp; BIB Issue Desk</h3>
-    <p style="margin-bottom:14px;color:#475569;font-size:0.95rem">Enter physical bib number in hand (e.g., <b>89</b> automatically maps to <b>#1089</b> in the system).</p>
-    
+    <p class="note">Type the number printed on the bib you are handing over (example: <b>89</b> becomes <b>#1089</b> in the system). The bib number is <b>never filled in automatically</b> – type it for every person.</p>
+
     <div id="spotErr" class="msg e hide"></div>
 
-    <form id="spotForm" onsubmit="submitSpot(event)">
-      <div class="grid2" style="margin-bottom:12px">
-        <div>
-          <label><b>Category / Programme *</b></label>
-          <select id="spCat" required onchange="onCatChange()">
-            <option value="M5">5 KM Run / Elders Walk</option>
-            <option value="M7">7 KM Run</option>
-            <option value="KIDS">Kids Indoor Marathon</option>
-            <option value="AZ">Bodybuilding Championship</option>
-          </select>
-        </div>
-        <div>
-          <label><b style="color:var(--r)">Physical BIB in Hand (e.g. 9, 89, 100) *</b></label>
-          <input type="number" id="spBib" min="1" max="999" required placeholder="e.g. 89" style="font-size:1.15rem;font-weight:bold;border-color:var(--r)">
+    <form id="spotForm" onsubmit="spotReview(event)" autocomplete="off" novalidate>
+      <div class="fld">
+        <label class="lb red" for="spBib">1. BIB number in hand *</label>
+        <input type="text" id="spBib" class="bigbib" inputmode="numeric" maxlength="3" placeholder="e.g. 89">
+        <div id="spBibStatus" class="bst">Type the number printed on the bib</div>
+      </div>
+
+      <div class="fld">
+        <label class="lb">2. Category *</label>
+        <div class="chips">
+          <label class="chp"><input type="radio" name="spCat" value="M7"><span>🏃 7 KM Run<small>age 16+</small></span></label>
+          <label class="chp"><input type="radio" name="spCat" value="M5"><span>🚶 5 KM Run / Elders Walk<small>age 7–15 and elders</small></span></label>
+          <label class="chp"><input type="radio" name="spCat" value="KIDS"><span>🧒 Kids Indoor<small>age 3–6</small></span></label>
+          <label class="chp"><input type="radio" name="spCat" value="AZ"><span>💪 Bodybuilding<small>boys 10–17</small></span></label>
         </div>
       </div>
 
-      <div class="grid2" style="margin-bottom:12px">
-        <div>
-          <label><b>Full Name *</b></label>
-          <input type="text" id="spName" required placeholder="Participant Name">
+      <div class="grid2">
+        <div class="fld"><label class="lb" for="spName">3. Full name *</label><input type="text" id="spName" placeholder="Participant name"></div>
+        <div class="fld"><label class="lb" for="spPhone">4. WhatsApp mobile (10 digits) *</label><input type="tel" id="spPhone" inputmode="numeric" maxlength="10" placeholder="10-digit number"></div>
+      </div>
+
+      <div class="grid3">
+        <div class="fld"><label class="lb" for="spAge">5. Age *</label><input type="text" id="spAge" inputmode="numeric" maxlength="3" placeholder="e.g. 62"></div>
+        <div class="fld"><label class="lb">6. Gender *</label>
+          <div class="chips">
+            <label class="chp"><input type="radio" name="spGender" value="M"><span>Male</span></label>
+            <label class="chp"><input type="radio" name="spGender" value="F"><span>Female</span></label>
+          </div>
         </div>
-        <div>
-          <label><b>WhatsApp Mobile No (10-digits) *</b></label>
-          <input type="tel" id="spPhone" required pattern="[0-9]{10}" placeholder="WhatsApp Number">
+        <div class="fld"><label class="lb" for="spCity">Town / Village</label><input type="text" id="spCity" placeholder="e.g. Mukkudal"></div>
+      </div>
+
+      <div class="fld">
+        <label class="lb">7. Payment *</label>
+        <div class="chips three">
+          <label class="chp"><input type="radio" name="spPay" value="Cash" checked><span>💵 Cash</span></label>
+          <label class="chp"><input type="radio" name="spPay" value="Direct UPI"><span>📱 UPI / QR</span></label>
+          <label class="chp"><input type="radio" name="spPay" value="Complimentary"><span>🎁 Free</span></label>
         </div>
       </div>
 
-      <div class="grid3" style="margin-bottom:12px">
-        <div>
-          <label><b>Age *</b></label>
-          <input type="number" id="spAge" min="3" max="100" required placeholder="e.g. 62">
-        </div>
-        <div>
-          <label><b>Gender *</b></label>
-          <select id="spGender">
-            <option value="M">Male / Boy</option>
-            <option value="F">Female / Girl</option>
-          </select>
-        </div>
-        <div>
-          <label><b>Town / City / Village</b></label>
-          <input type="text" id="spCity" placeholder="e.g. Mukkudal">
-        </div>
+      <div class="grid2">
+        <div class="fld"><label class="lb" for="spAmount">Amount (₹)</label><input type="text" id="spAmount" inputmode="numeric" maxlength="5" placeholder="Choose category first"></div>
+        <div class="fld"><label class="lb" for="spPayRef">UPI reference / desk note <small>(needed for UPI)</small></label><input type="text" id="spPayRef" placeholder="e.g. last digits of UTR / Desk 1"></div>
       </div>
 
-      <div class="grid3" style="margin-bottom:14px">
-        <div>
-          <label><b>Payment Mode *</b></label>
-          <select id="spPayMode" onchange="onPayModeChange()">
-            <option value="Cash">Cash Collected</option>
-            <option value="Direct UPI">Direct UPI / QR Scan</option>
-            <option value="Complimentary">Complimentary / Free</option>
-          </select>
-        </div>
-        <div>
-          <label><b>Amount (₹)</b></label>
-          <input type="number" id="spAmount" value="200" min="0" step="10">
-        </div>
-        <div>
-          <label><b>UPI Ref / Desk Note</b></label>
-          <input type="text" id="spPayRef" placeholder="e.g. UTR / Desk 1">
-        </div>
+      <div class="row" style="margin-bottom:14px">
+        <label style="cursor:pointer;display:flex;gap:8px;align-items:center"><input type="checkbox" id="spAttend" checked style="width:auto"> <b>Mark present now</b> (bib handed over)</label>
+        <label style="cursor:pointer;display:flex;gap:8px;align-items:center"><input type="checkbox" id="spAutoWa" style="width:auto"> Open WhatsApp automatically after saving</label>
       </div>
 
-      <div class="row" style="margin-bottom:16px">
-        <label style="cursor:pointer"><input type="checkbox" id="spAttend" checked> <b>Mark Present Immediately</b> (BIB handed over at desk)</label>
-      </div>
-
-      <button type="submit" id="spSubmitBtn" style="width:100%;padding:12px;font-size:1.05rem">⚡ Register &amp; Assign BIB</button>
+      <button type="submit" id="spSubmitBtn" class="bigbtn">Check &amp; continue ➜</button>
     </form>
+
+    <div id="spReview" class="hide">
+      <div class="rvbox">
+        <div class="rvh">Check everything before saving</div>
+        <div class="rvbib" id="rvBib"></div>
+        <table class="rvt" id="rvTable"></table>
+        <div id="rvWarn" class="rvw hide"></div>
+        <div class="row" style="margin-top:14px">
+          <button id="rvOk" class="bigbtn" type="button" onclick="spotConfirm()" style="flex:2">✅ Confirm &amp; Register</button>
+          <button class="s" type="button" onclick="spotBack()" style="flex:1;padding:14px">✏️ Edit</button>
+        </div>
+      </div>
+    </div>
 
     <div id="spotSuccess" class="hide" style="margin-top:16px;padding:16px;background:#ecfdf5;border:2px solid #a7f3d0;border-radius:10px">
       <h3 style="color:#065f46;margin-top:0">✅ Successfully Registered!</h3>
@@ -274,18 +288,40 @@ function load(){
 }
 setInterval(function(){if(T&&!document.hidden)load()},7000);
 
-/* SPOT REGISTRATION LOGIC */
-function onCatChange(){
-  var c=$('spCat').value;
-  if(c==='KIDS')$('spAmount').value='150';
-  else if(c==='AZ')$('spAmount').value='300';
-  else $('spAmount').value='200';
+/* SPOT REGISTRATION DESK */
+var FEE={M7:200,M5:200,KIDS:150,AZ:300};   // standard fee per category (rupees) - change here if a fee changes
+var spotBusy=false,amtTouched=false,spotDraft=null;
+function rv(name){var r=document.querySelector('input[name="'+name+'"]:checked');return r?r.value:''}
+function clearRadio(name){document.querySelectorAll('input[name="'+name+'"]').forEach(function(r){r.checked=false})}
+function setRadio(name,val){document.querySelectorAll('input[name="'+name+'"]').forEach(function(r){r.checked=(r.value===val)})}
+function onlyDigits(el,max){el.value=el.value.replace(/\D/g,'').slice(0,max)}
+function showSpotErr(list){$('spotErr').innerHTML='❌ '+list.map(esc).join('<br>❌ ');$('spotErr').className='msg e';try{$('spotErr').scrollIntoView({behavior:'smooth',block:'nearest'})}catch(x){}}
+function hideSpotErr(){$('spotErr').className='msg e hide'}
+function fixAmount(){
+  var c=rv('spCat'),m=rv('spPay');
+  if(m==='Complimentary'){$('spAmount').value='0';return}
+  if(amtTouched)return;
+  $('spAmount').value=c?String(FEE[c]):'';
 }
-function onPayModeChange(){
-  var m=$('spPayMode').value;
-  if(m==='Complimentary')$('spAmount').value='0';
-  else onCatChange();
+function bibOwner(n){
+  var sys=normBib(n);if(!sys)return null;
+  return D.rows.filter(function(r){return Number(r.bib_no)===sys})[0]||null;
 }
+function spotBibCheck(){
+  var el=$('spBib'),st=$('spBibStatus');if(!el||!st)return;
+  var v=el.value.trim(),n=parseInt(v,10);
+  if(!v){st.className='bst';st.textContent='Type the number printed on the bib';return}
+  if(!n||n<1||n>999){st.className='bst no';st.textContent='❌ Bib must be a number from 1 to 999';return}
+  var o=bibOwner(n);
+  if(o){st.className='bst no';st.textContent='❌ Bib '+n+' is already given to '+o.name+' ('+(CAT[o.category]||o.category)+')';return}
+  st.className='bst ok';st.textContent='✅ Bib '+n+' is free (system #'+normBib(n)+')';
+}
+$('spBib').addEventListener('input',function(){onlyDigits(this,3);$('spotSuccess').classList.add('hide');hideSpotErr();spotBibCheck()});
+$('spAge').addEventListener('input',function(){onlyDigits(this,3)});
+$('spPhone').addEventListener('input',function(){onlyDigits(this,10)});
+$('spAmount').addEventListener('input',function(){onlyDigits(this,5);amtTouched=true});
+document.querySelectorAll('input[name="spCat"]').forEach(function(r){r.addEventListener('change',fixAmount)});
+document.querySelectorAll('input[name="spPay"]').forEach(function(r){r.addEventListener('change',function(){if(rv('spPay')==='Complimentary')amtTouched=false;fixAmount()})});
 
 function spotWaText(r,physBib,payStr){
   var catName=CAT[r.category]||r.category;
@@ -303,65 +339,92 @@ function spotWaText(r,physBib,payStr){
     "Natura's Trust: "+location.origin;
 }
 
-function submitSpot(e){
+
+function spotWarnings(cat,age,gender,pay,amount,phone){
+  var w=[];
+  if(cat==='KIDS'&&(age<3||age>6))w.push('Kids Indoor is for age 3–6, but the age entered is '+age+'.');
+  if(cat==='M5'&&age<7)w.push('5 KM is for age 7 and above, but the age entered is '+age+'.');
+  if(cat==='M5'&&age>15)w.push('Age '+age+' is above 15 – this entry is counted in the 5 KM Elders Walk.');
+  if(cat==='M7'&&age<16)w.push('7 KM is for age 16 and above, but the age entered is '+age+'.');
+  if(cat==='AZ'&&(age<10||age>17))w.push('Bodybuilding is for boys aged 10–17, but the age entered is '+age+'.');
+  if(cat==='AZ'&&gender!=='M')w.push('Bodybuilding is for boys only.');
+  if(pay!=='Complimentary'&&Number(amount)!==FEE[cat])w.push('Amount ₹'+amount+' is different from the standard fee ₹'+FEE[cat]+'.');
+  var same=D.rows.filter(function(r){return String(r.phone)===phone})[0];
+  if(same)w.push('This mobile number is already registered for '+same.name+' (BIB '+dispBib(same.bib_no).replace(/<[^>]+>/g,'')+').');
+  return w;
+}
+function spotReview(e){
   e.preventDefault();
-  var btn=$('spSubmitBtn');
-  btn.disabled=true;btn.textContent='Registering...';
-  $('spotErr').className='msg e hide';
-  $('spotSuccess').classList.add('hide');
+  if(spotBusy)return;
+  hideSpotErr();
+  var bib=parseInt($('spBib').value,10),cat=rv('spCat'),gender=rv('spGender'),pay=rv('spPay'),
+      name=$('spName').value.replace(/\s+/g,' ').trim(),phone=$('spPhone').value.replace(/\D/g,''),
+      age=parseInt($('spAge').value,10),city=$('spCity').value.trim(),amount=$('spAmount').value.trim(),ref=$('spPayRef').value.trim();
+  var errs=[];
+  if(!bib||bib<1||bib>999)errs.push('Type the BIB number (1 to 999) that you are handing over.');
+  else{var o=bibOwner(bib);if(o)errs.push('BIB '+bib+' is already given to '+o.name+'. Check the number on the bib in your hand.')}
+  if(!cat)errs.push('Choose the category.');
+  if(name.length<2)errs.push('Enter the full name.');
+  if(!/^[6-9]\d{9}$/.test(phone))errs.push('Enter a valid 10-digit mobile number (starts with 6, 7, 8 or 9).');
+  if(!age||age<3||age>100)errs.push('Enter the age (3 to 100).');
+  if(!gender)errs.push('Choose Male or Female.');
+  if(!pay)errs.push('Choose the payment mode.');
+  if(amount===''||isNaN(Number(amount)))errs.push('Enter the amount (0 if free).');
+  if(pay==='Direct UPI'&&!ref)errs.push('Enter the UPI reference (UTR) or a desk note.');
+  if(errs.length)return showSpotErr(errs);
 
-  var rawBib=parseInt($('spBib').value,10);
-  var payload={
-    category:$('spCat').value,
-    bib_no:rawBib,
-    name:$('spName').value.trim(),
-    phone:$('spPhone').value.trim(),
-    age:parseInt($('spAge').value,10),
-    gender:$('spGender').value,
-    city:$('spCity').value.trim(),
-    payment_mode:$('spPayMode').value,
-    amount:$('spAmount').value,
-    payment_ref:$('spPayRef').value.trim(),
-    attended:$('spAttend').checked
-  };
-
+  var warns=spotWarnings(cat,age,gender,pay,amount,phone);
+  spotDraft={payload:{category:cat,bib_no:bib,name:name,phone:phone,age:age,gender:gender,city:city,payment_mode:pay,amount:amount,payment_ref:ref,attended:$('spAttend').checked}};
+  $('rvBib').textContent='BIB '+bib;
+  var rows=[['Name',name],['Category',CAT[cat]+' • '+gl(cat,gender)],['Age / Gender',age+' • '+(gender==='F'?'Female':'Male')],['Mobile',phone],['Town',city||'—'],
+            ['Payment',pay+' – ₹'+amount+(ref?' ('+ref+')':'')],['Present now',$('spAttend').checked?'Yes':'No']];
+  $('rvTable').innerHTML=rows.map(function(r){return'<tr><td>'+r[0]+'</td><td><b>'+esc(r[1])+'</b></td></tr>'}).join('');
+  $('rvWarn').innerHTML=warns.length?'⚠ Please check:<br>• '+warns.map(esc).join('<br>• '):'';
+  $('rvWarn').className='rvw'+(warns.length?'':' hide');
+  $('rvOk').textContent=warns.length?'✅ Confirm anyway':'✅ Confirm & Register';
+  $('rvOk').disabled=false;
+  $('spotForm').classList.add('hide');$('spReview').classList.remove('hide');
+  try{$('rvOk').focus();$('spReview').scrollIntoView({behavior:'smooth',block:'start'})}catch(x){}
+}
+function spotBack(){$('spReview').classList.add('hide');$('spotForm').classList.remove('hide');$('spBib').focus()}
+function resetSpotForm(){
+  ['spBib','spName','spPhone','spAge','spCity','spPayRef','spAmount'].forEach(function(i){$(i).value=''});
+  clearRadio('spCat');clearRadio('spGender');setRadio('spPay','Cash');amtTouched=false;spotDraft=null;
+  spotBibCheck();
+}
+function spotConfirm(){
+  if(spotBusy||!spotDraft)return;
+  spotBusy=true;var okBtn=$('rvOk');okBtn.disabled=true;okBtn.textContent='Saving… please wait';
+  var payload=spotDraft.payload;
   api('spot-reg',payload).then(function(j){
     lastSpotEntry=j.entry;
-    var paySummary=payload.payment_mode+(payload.amount>0?' - ₹'+payload.amount:'')+(payload.payment_ref?' ('+payload.payment_ref+')':'');
+    var paySummary=payload.payment_mode+(Number(payload.amount)>0?' - ₹'+payload.amount:'')+(payload.payment_ref?' ('+payload.payment_ref+')':'');
     var finalSysBib=j.entry.bib_no;
     var displayBib=finalSysBib>=1000?(finalSysBib-1000):finalSysBib;
-
     $('succBib').textContent='#'+displayBib+' (System #'+finalSysBib+')';
     $('succName').textContent=payload.name;
     $('succCat').textContent=CAT[payload.category]+' • '+gl(payload.category,payload.gender);
     $('succPay').textContent=paySummary;
-
     var waLink='https://wa.me/91'+payload.phone+'?text='+encodeURIComponent(spotWaText(j.entry,displayBib,paySummary));
     $('succWaBtn').href=waLink;
     $('succPrintBtn').onclick=function(){printSingleBadge(j.entry)};
-
     $('spotSuccess').classList.remove('hide');
-    window.open(waLink,'_blank');
-
-    var nextBib=rawBib+1;
-    $('spBib').value=nextBib<=999?nextBib:'';
-    $('spName').value='';
-    $('spPhone').value='';
-    $('spAge').value='';
-    $('spCity').value='';
-    $('spPayRef').value='';
-
-    btn.disabled=false;btn.textContent='⚡ Register & Assign BIB';
+    if($('spAutoWa').checked)window.open(waLink,'_blank');
+    spotBusy=false;
+    resetSpotForm();
+    $('spReview').classList.add('hide');$('spotForm').classList.remove('hide');
     load();
-    $('spName').focus();
+    $('spBib').focus();
   }).catch(function(err){
-    $('spotErr').textContent='❌ '+err.message;
-    $('spotErr').className='msg e';
-    btn.disabled=false;btn.textContent='⚡ Register & Assign BIB';
+    spotBusy=false;
+    spotBack();   /* go back to the form - nothing typed is lost */
+    var msgs=['NOT saved: '+err.message];
+    if(/razorpay_order_id/i.test(err.message))msgs.push('This is a server setup problem, not a typing mistake. The developer must allow an empty razorpay_order_id for spot entries (one-line database fix).');
+    showSpotErr(msgs);
   });
 }
 
-function renderRecentSpot(){
+function renderRecentSpot(){try{spotBibCheck()}catch(x){}
   var spots=D.rows.filter(function(r){return r.reg_no&&r.reg_no.indexOf('SPOT')>-1}).sort(function(a,b){return new Date(regAt(b))-new Date(regAt(a))});
   $('recentSpotList').innerHTML=spots.length?'<table><tr><th>Physical BIB</th><th>Name</th><th>Event</th><th>Phone</th><th>City</th><th>Payment</th><th>Present</th></tr>'+
   spots.slice(0,25).map(function(r){
@@ -401,17 +464,17 @@ function renderReg(){
     var bStr=String(r.bib_no||'');
     var shortB=r.bib_no>=1000?String(r.bib_no-1000):'';
     var matchBib=(bStr===q||shortB===q||bStr.indexOf(q)>-1||shortB.indexOf(q)>-1);
-    var matchText=(r.name+' '+r.phone+' '+(r.city||'')+' '+(r.aadhaar_last4||'')).toLowerCase().indexOf(q)>-1;
+    var matchText=(r.name+' '+r.phone+' '+(r.city||'')).toLowerCase().indexOf(q)>-1;
     return(!c||r.category===c)&&(!q||matchBib||matchText);
   });
   if($('newest').checked)VIEW.sort(function(a,b){return new Date(regAt(b))-new Date(regAt(a))});
 
-  $('regList').innerHTML='<table><tr><th>BIB (Cloth / Sys)</th><th>Name</th><th>Registered</th><th>Event</th><th>Group</th><th>Age</th><th>Phone</th><th>City</th><th>Aadhaar (last 4)</th><th>Payment</th><th>Status</th><th>Present</th></tr>'+
-  VIEW.map(function(r){return'<tr><td><b>'+dispBib(r.bib_no)+'</b></td><td>'+esc(r.name)+'</td><td>'+fdt(regAt(r))+'</td><td>'+CAT[r.category]+'</td><td>'+gl(r.category,r.gender)+'</td><td>'+r.age+'</td><td>'+esc(r.phone)+'</td><td>'+esc(r.city||'')+'</td><td>'+esc(r.aadhaar_last4||'')+'</td><td>'+payInfo(r)+'</td><td>'+r.payment_status+'</td><td>'+(r.attended_at?'✅':'')+'</td></tr>'}).join('')+'</table>';
+  $('regList').innerHTML='<table><tr><th>BIB (Cloth / Sys)</th><th>Name</th><th>Registered</th><th>Event</th><th>Group</th><th>Age</th><th>Phone</th><th>City</th><th>Payment</th><th>Status</th><th>Present</th></tr>'+
+  VIEW.map(function(r){return'<tr><td><b>'+dispBib(r.bib_no)+'</b></td><td>'+esc(r.name)+'</td><td>'+fdt(regAt(r))+'</td><td>'+CAT[r.category]+'</td><td>'+gl(r.category,r.gender)+'</td><td>'+r.age+'</td><td>'+esc(r.phone)+'</td><td>'+esc(r.city||'')+'</td><td>'+payInfo(r)+'</td><td>'+r.payment_status+'</td><td>'+(r.attended_at?'✅':'')+'</td></tr>'}).join('')+'</table>';
 }
 
 function csv(){
-  var rows=[['Physical BIB','System BIB','Reg No','Name','Registered (IST)','Age','Group','Event','Phone','City','Aadhaar Last 4','Payment Mode','Amount','Status','Paid At','Present','Finish Time']].concat(VIEW.map(function(r){return[(r.bib_no>=1000?(r.bib_no-1000):r.bib_no)||'',r.bib_no||'',r.reg_no||'',r.name,fdt(regAt(r)),r.age,gl(r.category,r.gender),CAT[r.category],r.phone,r.city||'',r.aadhaar_last4?'\t'+r.aadhaar_last4:'',payInfo(r),r.amount,r.payment_status,r.paid_at||'',r.attended_at?'Yes':'No',(r.finish_at&&D.race[r.category])?fmt(el(r),2):'']}));
+  var rows=[['Physical BIB','System BIB','Reg No','Name','Registered (IST)','Age','Group','Event','Phone','City','Payment Mode','Amount','Status','Paid At','Present','Finish Time']].concat(VIEW.map(function(r){return[(r.bib_no>=1000?(r.bib_no-1000):r.bib_no)||'',r.bib_no||'',r.reg_no||'',r.name,fdt(regAt(r)),r.age,gl(r.category,r.gender),CAT[r.category],r.phone,r.city||'',payInfo(r),r.amount,r.payment_status,r.paid_at||'',r.attended_at?'Yes':'No',(r.finish_at&&D.race[r.category])?fmt(el(r),2):'']}));
   var s=rows.map(function(a){return a.map(function(x){return'"'+String(x).replace(/"/g,'""')+'"'}).join(',')}).join('\r\n');
   var a=document.createElement('a');a.href=URL.createObjectURL(new Blob(['\ufeff'+s],{type:'text/csv'}));a.download='natura-registrations.csv';a.click();
 }
