@@ -1,7 +1,7 @@
 // Single admin API (keeps the Vercel function count low).
 // Two roles: "admin" (everything, incl. stopwatch) and "organiser" (attendance + finish-line entry only).
 const crypto = require('crypto');
-const { sb } = require('./_lib');
+const { sb, markPaid } = require('./_lib');
 
 const PW = () => process.env.ADMIN_PASSWORD || '';
 const OP = () => process.env.ORGANISER_PASSWORD || '';
@@ -58,6 +58,50 @@ module.exports = async (req, res) => {
     if (!user) return res.status(401).json({ error: 'Please login again' });
     const isAdmin = user.role === 'admin';
     if (ADMIN_ONLY.includes(a) && !isAdmin) return res.status(403).json({ error: 'Only the admin can control the stopwatch' });
+
+    if (a === 'spot-reg') { // on-the-spot registration at the desk with a manually typed BIB (89 -> system BIB 1089)
+      const n = parseInt(b.bib_no, 10);
+      if (!n || n < 1 || n > 9999) return res.status(400).json({ error: 'BIB must be a number from 1 to 999' });
+      const bib = n < 1000 ? 1000 + n : n;
+      const cat = b.category;
+      if (!['M7', 'M5', 'KIDS', 'AZ'].includes(cat)) return res.status(400).json({ error: 'Invalid category' });
+      const name = String(b.name || '').replace(/\s+/g, ' ').trim().slice(0, 60);
+      const phone = String(b.phone || '').replace(/\D/g, '');
+      const age = parseInt(b.age, 10);
+      const gender = b.gender;
+      const mode = String(b.payment_mode || '');
+      const amount = Number(b.amount);
+      const ref = String(b.payment_ref || '').trim().slice(0, 60);
+      const city = String(b.city || '').trim().slice(0, 60);
+      if (name.length < 2) return res.status(400).json({ error: 'Enter the full name' });
+      if (!/^[6-9]\d{9}$/.test(phone)) return res.status(400).json({ error: 'Enter a valid 10-digit mobile number' });
+      if (!age || age < 3 || age > 100) return res.status(400).json({ error: 'Enter a valid age (3 to 100)' });
+      if (!['M', 'F'].includes(gender)) return res.status(400).json({ error: 'Choose Male or Female' });
+      if (!['Cash', 'Direct UPI', 'Complimentary'].includes(mode)) return res.status(400).json({ error: 'Invalid payment mode' });
+      if (isNaN(amount) || amount < 0 || amount > 100000) return res.status(400).json({ error: 'Invalid amount' });
+
+      const dup = await sb('nt_registrations?bib_no=eq.' + bib + '&select=name');
+      if (dup && dup.length) return res.status(409).json({ error: 'BIB ' + n + ' is already given to ' + dup[0].name });
+
+      const orderId = 'SPOT' + Date.now() + Math.floor(Math.random() * 900 + 100);
+      const row = { event: cat === 'AZ' ? 'aanazhagan' : 'marathon', category: cat, name, age, gender, phone, city: city || null, amount, payment_status: 'pending', razorpay_order_id: orderId };
+      try { await sb('nt_registrations', { method: 'POST', body: JSON.stringify({ ...row, bib_no: bib }) }); }
+      catch (e1) { await sb('nt_registrations', { method: 'POST', body: JSON.stringify(row) }); } // table may assign the BIB itself; fixed below
+      const o = encodeURIComponent(orderId);
+      try {
+        const payId = 'SPOT_' + mode.replace(/\s+/g, '_') + (ref ? '_' + ref.replace(/[^\w.-]+/g, '_') : '');
+        const paid = await markPaid(orderId, payId); // the database trigger gives the registration number
+        if (!paid) throw new Error('Could not mark the registration as paid');
+        if (Number(paid.bib_no) !== bib) await sb('nt_registrations?razorpay_order_id=eq.' + o, { method: 'PATCH', body: JSON.stringify({ bib_no: bib }) });
+        if (b.attended) await sb('nt_registrations?razorpay_order_id=eq.' + o, { method: 'PATCH', body: JSON.stringify({ attended_at: new Date().toISOString() }) });
+      } catch (e2) {
+        await sb('nt_registrations?razorpay_order_id=eq.' + o + '&payment_status=eq.pending', { method: 'DELETE' }).catch(() => {});
+        if (/duplicate|unique/i.test(String(e2.message))) return res.status(409).json({ error: 'BIB ' + n + ' is already used' });
+        throw e2;
+      }
+      const entry = (await sb('nt_registrations?razorpay_order_id=eq.' + o + '&select=' + ORG_COLS))[0];
+      return res.status(200).json({ entry });
+    }
 
     if (a === 'list') {
       const rows = await allRows(isAdmin && !!b.all, isAdmin ? COLS : ORG_COLS);
