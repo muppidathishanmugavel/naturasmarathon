@@ -401,17 +401,17 @@ function renderReg(){
     var bStr=String(r.bib_no||'');
     var shortB=r.bib_no>=1000?String(r.bib_no-1000):'';
     var matchBib=(bStr===q||shortB===q||bStr.indexOf(q)>-1||shortB.indexOf(q)>-1);
-    var matchText=(r.name+' '+r.phone+' '+(r.city||'')).toLowerCase().indexOf(q)>-1;
+    var matchText=(r.name+' '+r.phone+' '+(r.city||'')+' '+(r.aadhaar_last4||'')).toLowerCase().indexOf(q)>-1;
     return(!c||r.category===c)&&(!q||matchBib||matchText);
   });
   if($('newest').checked)VIEW.sort(function(a,b){return new Date(regAt(b))-new Date(regAt(a))});
 
-  $('regList').innerHTML='<table><tr><th>BIB (Cloth / Sys)</th><th>Name</th><th>Registered</th><th>Event</th><th>Group</th><th>Age</th><th>Phone</th><th>City</th><th>Payment</th><th>Status</th><th>Present</th></tr>'+
-  VIEW.map(function(r){return'<tr><td><b>'+dispBib(r.bib_no)+'</b></td><td>'+esc(r.name)+'</td><td>'+fdt(regAt(r))+'</td><td>'+CAT[r.category]+'</td><td>'+gl(r.category,r.gender)+'</td><td>'+r.age+'</td><td>'+esc(r.phone)+'</td><td>'+esc(r.city||'')+'</td><td>'+payInfo(r)+'</td><td>'+r.payment_status+'</td><td>'+(r.attended_at?'✅':'')+'</td></tr>'}).join('')+'</table>';
+  $('regList').innerHTML='<table><tr><th>BIB (Cloth / Sys)</th><th>Name</th><th>Registered</th><th>Event</th><th>Group</th><th>Age</th><th>Phone</th><th>City</th><th>Aadhaar (last 4)</th><th>Payment</th><th>Status</th><th>Present</th></tr>'+
+  VIEW.map(function(r){return'<tr><td><b>'+dispBib(r.bib_no)+'</b></td><td>'+esc(r.name)+'</td><td>'+fdt(regAt(r))+'</td><td>'+CAT[r.category]+'</td><td>'+gl(r.category,r.gender)+'</td><td>'+r.age+'</td><td>'+esc(r.phone)+'</td><td>'+esc(r.city||'')+'</td><td>'+esc(r.aadhaar_last4||'')+'</td><td>'+payInfo(r)+'</td><td>'+r.payment_status+'</td><td>'+(r.attended_at?'✅':'')+'</td></tr>'}).join('')+'</table>';
 }
 
 function csv(){
-  var rows=[['Physical BIB','System BIB','Reg No','Name','Registered (IST)','Age','Group','Event','Phone','City','Payment Mode','Amount','Status','Paid At','Present','Finish Time']].concat(VIEW.map(function(r){return[(r.bib_no>=1000?(r.bib_no-1000):r.bib_no)||'',r.bib_no||'',r.reg_no||'',r.name,fdt(regAt(r)),r.age,gl(r.category,r.gender),CAT[r.category],r.phone,r.city||'',payInfo(r),r.amount,r.payment_status,r.paid_at||'',r.attended_at?'Yes':'No',(r.finish_at&&D.race[r.category])?fmt(el(r),2):'']}));
+  var rows=[['Physical BIB','System BIB','Reg No','Name','Registered (IST)','Age','Group','Event','Phone','City','Aadhaar Last 4','Payment Mode','Amount','Status','Paid At','Present','Finish Time']].concat(VIEW.map(function(r){return[(r.bib_no>=1000?(r.bib_no-1000):r.bib_no)||'',r.bib_no||'',r.reg_no||'',r.name,fdt(regAt(r)),r.age,gl(r.category,r.gender),CAT[r.category],r.phone,r.city||'',r.aadhaar_last4?'\t'+r.aadhaar_last4:'',payInfo(r),r.amount,r.payment_status,r.paid_at||'',r.attended_at?'Yes':'No',(r.finish_at&&D.race[r.category])?fmt(el(r),2):'']}));
   var s=rows.map(function(a){return a.map(function(x){return'"'+String(x).replace(/"/g,'""')+'"'}).join(',')}).join('\r\n');
   var a=document.createElement('a');a.href=URL.createObjectURL(new Blob(['\ufeff'+s],{type:'text/csv'}));a.download='natura-registrations.csv';a.click();
 }
