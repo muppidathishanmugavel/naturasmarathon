@@ -1,3 +1,7 @@
+export default async function handler(req, res) {
+  return res.status(403).json({ error: "Registration is closed." });
+  // ...rest of your existing code stays below
+}
 const { sb, cf } = require('./_lib');
 
 const PH = /^[6-9]\d{9}$/;
